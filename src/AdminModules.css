@@ -1,0 +1,74 @@
+.module-page{display:grid;gap:22px;color:#253342}.module-intro{display:flex;align-items:flex-end;justify-content:space-between;gap:20px}.module-intro h2{font-size:25px;line-height:1.2;letter-spacing:-.7px;margin:7px 0 6px;font-weight:750;color:#1d2d3c}.module-intro p,.module-toolbar p,.settings-section p{margin:0;color:#7b8792;font-size:13px}.module-eyebrow{font-size:10px;font-weight:800;letter-spacing:1.25px;color:#71909c}.module-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.module-stat{background:#fff;border:1px solid #e9edf0;border-radius:13px;padding:17px 19px;display:grid;gap:7px;box-shadow:0 3px 12px #1b34400a}.module-stat span{font-size:12px;color:#7d8993;font-weight:600}.module-stat strong{font-size:25px;letter-spacing:-.7px;color:#203343}.module-stat small{font-size:11px;color:#9aa4ac}.module-panel{background:#fff;border:1px solid #e8edf0;border-radius:14px;padding:21px;box-shadow:0 4px 18px #1b344008;min-width:0}.module-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}.module-toolbar h3,.settings-section h3{font-size:15px;margin:0 0 5px;color:#253746;letter-spacing:-.2px}.module-search{height:38px;min-width:220px;border:1px solid #e2e8eb;border-radius:8px;padding:0 12px;color:#354653;background:#fff;font:inherit;font-size:12px;outline:none}.module-search:focus,.module-form input:focus,.module-form select:focus,.module-form textarea:focus,.settings-password-form input:focus{border-color:#68aaa2;box-shadow:0 0 0 3px #65aaa21c}.module-table-wrap{overflow-x:auto}.module-table{width:100%;border-collapse:collapse;white-space:nowrap;text-align:left}.module-table th{font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:#8a969e;font-weight:750;padding:12px 13px;border-bottom:1px solid #edf0f2}.module-table td{padding:14px 13px;border-bottom:1px solid #f0f2f4;font-size:12px;color:#566570}.module-table tbody tr:last-child td{border-bottom:0}.module-table td strong{display:block;color:#2b3c49;font-size:12px;font-weight:700}.module-table td small{display:block;color:#9aa4ab;font-size:10px;margin-top:4px}.module-status{display:inline-flex;padding:5px 9px;border-radius:20px;font-size:10px;font-weight:750;background:#f1f3f4;color:#677680}.module-status.upcoming,.module-status.pending{background:#fff5e8;color:#b7792d}.module-status.ongoing,.module-status.active{background:#eaf6f2;color:#31836f}.module-status.completed{background:#edf2fa;color:#5876a8}.module-status.cancelled,.module-status.inactive{background:#fff0ef;color:#bf625d}.module-row-actions{display:flex;gap:10px}.module-row-actions button,.module-text-button{border:0;background:none;padding:4px 0;color:#4e8e88;font:inherit;font-size:11px;font-weight:700;cursor:pointer}.module-row-actions button.danger,.module-text-button.danger{color:#c36d67}.module-button{border:1px solid transparent;border-radius:8px;padding:10px 14px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:background .18s,border-color .18s,transform .18s}.module-button:disabled{opacity:.6;cursor:wait}.module-button-primary{background:#2c827b;color:white;box-shadow:0 3px 8px #2c827b20}.module-button-primary:hover{background:#236f69;transform:translateY(-1px)}.module-button-quiet{background:#fff;border-color:#e3e8eb;color:#65737d}.module-button-danger{background:#fff4f2;border-color:#f3d8d5;color:#b75e58}.module-empty,.module-loading{padding:48px 18px;text-align:center;color:#8a969e;font-size:12px}.module-empty{display:grid;justify-items:center;gap:8px}.module-empty-icon{width:38px;height:38px;border-radius:12px;background:#eef5f4;color:#438e87;display:grid;place-items:center;font-size:22px}.module-empty strong{font-size:13px;color:#43535e}.module-empty p{margin:0;max-width:330px;line-height:1.6}.module-notice,.module-error{padding:10px 12px;border-radius:8px;margin:0 0 14px;font-size:12px}.module-notice{background:#eef7f3;color:#397d68}.module-error{background:#fff1ef;color:#b85e58}.module-modal-backdrop{position:fixed;inset:0;z-index:1000;background:#14243180;display:grid;place-items:center;padding:20px;overflow:auto}.module-modal{width:min(560px,100%);max-height:calc(100vh - 40px);overflow:auto;background:#fff;border-radius:15px;padding:23px;box-shadow:0 24px 80px #10243235}.module-modal>header{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:18px;border-bottom:1px solid #edf0f2}.module-modal h3{margin:6px 0 0;font-size:19px;color:#243744}.module-icon-button{border:0;background:#f3f5f6;border-radius:8px;width:32px;height:32px;font-size:21px;color:#63717b;cursor:pointer}.module-form{display:grid;gap:15px;padding-top:19px}.module-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.module-field{display:grid;gap:7px;min-width:0}.module-field>span{font-size:11px;font-weight:700;color:#586773}.module-form input,.module-form select,.module-form textarea,.settings-password-form input{width:100%;box-sizing:border-box;border:1px solid #e1e7ea;border-radius:8px;padding:10px 11px;background:#fff;color:#344653;font:inherit;font-size:12px;outline:none;min-height:39px}.module-form textarea{resize:vertical;line-height:1.5}.module-form-actions{display:flex;justify-content:flex-end;gap:9px;padding-top:5px}.module-tabs{display:flex;gap:4px;background:#f4f6f7;padding:4px;border-radius:9px}.module-tabs button{border:0;background:transparent;border-radius:6px;padding:7px 10px;color:#78858e;font:inherit;font-size:11px;font-weight:700;cursor:pointer}.module-tabs button.active{background:#fff;color:#2d7771;box-shadow:0 1px 4px #172d3b12}.module-message-list{display:grid}.module-message{display:flex;gap:13px;align-items:flex-start;padding:15px 3px;border-bottom:1px solid #eef1f2;cursor:pointer}.module-message:last-child{border-bottom:0}.module-message.unread{background:linear-gradient(90deg,#f4faf8,transparent);padding-left:10px}.module-message-avatar,.settings-avatar{width:36px;height:36px;flex:0 0 36px;border-radius:11px;background:#e9f2f1;color:#3d817a;display:grid;place-items:center;font-size:13px;font-weight:800}.module-message-content{flex:1;min-width:0}.module-message-top{display:flex;justify-content:space-between;gap:12px}.module-message-top strong{font-size:12px;color:#344653}.module-message-top time,.module-message-content small{font-size:10px;color:#98a2a9}.module-message-content p{font-size:12px;line-height:1.6;color:#64727b;margin:7px 0}.settings-panel{padding:0}.settings-section{display:flex;justify-content:space-between;gap:30px;padding:23px;border-bottom:1px solid #edf0f2}.settings-section:last-child{border-bottom:0}.settings-profile{display:flex;align-items:center;gap:11px;min-width:230px}.settings-avatar{width:42px;height:42px;flex-basis:42px}.settings-profile strong,.settings-profile span{display:block;font-size:12px;color:#344653}.settings-profile span{font-size:10px;color:#89959d;margin-top:4px;text-transform:capitalize}.settings-password-form{width:min(340px,100%);display:grid;gap:13px}.settings-password-form .module-button{justify-self:start}.settings-danger-zone{align-items:center}.settings-danger-zone h3{color:#a85f59}@media(max-width:760px){.module-intro{align-items:flex-start;flex-direction:column}.module-intro>.module-button{width:100%}.module-stats{grid-template-columns:1fr}.module-toolbar{align-items:flex-start;flex-direction:column}.module-search{width:100%;box-sizing:border-box}.module-panel{padding:15px}.module-form-grid{grid-template-columns:1fr}.settings-section{flex-direction:column;gap:16px}.settings-profile{min-width:0}.module-message-top{flex-direction:column;gap:4px}.module-tabs{width:100%;justify-content:space-between}.module-tabs button{flex:1}.module-modal{padding:18px}}
+
+/* STUDENT REGISTRATION PAGE */
+.registration-page {
+  font-family: inherit;
+}
+
+.registration-page .module-intro h2 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.registration-page .module-panel {
+  min-width: 0;
+}
+
+.activation-result {
+  border-color: #dcebe8;
+  background: #fcfefe;
+}
+
+.credential-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 18px 0 12px;
+}
+
+.credential-grid > div {
+  display: grid;
+  gap: 7px;
+  padding: 15px;
+  border: 1px solid #e8edef;
+  border-radius: 10px;
+  background: #f8faf9;
+}
+
+.credential-grid span,
+.credential-expiry {
+  color: #7b8792;
+  font-size: 11px;
+}
+
+.credential-grid strong {
+  color: #203343;
+  font-size: 15px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.credential-expiry {
+  margin-bottom: 14px;
+}
+
+.registration-table td {
+  vertical-align: middle;
+}
+
+.registration-table td:first-child strong {
+  color: #347f78;
+}
+
+@media (max-width: 760px) {
+  .registration-page .module-intro {
+    align-items: flex-start;
+  }
+
+  .registration-page .module-intro > button {
+    width: 100%;
+  }
+
+  .credential-grid {
+    grid-template-columns: 1fr;
+  }
+}

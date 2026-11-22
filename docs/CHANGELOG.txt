@@ -1,0 +1,3 @@
+Batch 1 scope: authentication identity refresh, central student/teacher account-state enforcement, persistent token sessions, logout, password-change session revocation, async bcrypt operations, and frontend logout integration.
+
+Not claimed as complete in this batch: full route-level permission mapping across all routes, comprehensive Admin/Super Admin policy enforcement, public activation rate limiting, full teacher attendance/results scope review, sensitive registration-field minimisation, account-linking validation across all controllers, distributed login throttling, and consistent audit logging.
