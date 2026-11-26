@@ -130,7 +130,8 @@ function login(req, res) {
           t.teacher_id AS teacher_code,
           t.name AS teacher_name,
           t.email AS teacher_email,
-          t.status AS teacher_status
+          t.status AS teacher_status,
+          t.registration_status AS teacher_registration_status
         FROM users u
         LEFT JOIN teachers t
           ON t.user_id = u.id
@@ -336,12 +337,14 @@ function login(req, res) {
                   name: user.teacher_name,
                   email: user.teacher_email,
                   status: user.teacher_status,
+                  registration_status: user.teacher_registration_status,
                 }
               : null;
 
             if (
               !teacher ||
               String(teacher.status).toLowerCase() !== "active" ||
+              teacher.registration_status !== "approved" ||
               !teacher.teacher_id
             ) {
               writeLoginLog(req, {
@@ -349,7 +352,7 @@ function login(req, res) {
                 email: normalizedIdentifier,
                 success: false,
                 failureReason:
-                  "Teacher identity mismatch or inactive profile",
+                  "Teacher identity mismatch, unapproved registration or inactive profile",
               });
 
               return res.status(403).json({

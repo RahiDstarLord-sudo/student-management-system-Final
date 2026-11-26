@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import "./StudentPortal.css";
+import { API_ORIGIN } from "./services/apiConfig";
 
 // Talks to the backend with the login token and returns the JSON answer
 async function api(path, options = {}) {
   const token = localStorage.getItem("token");
 
-  const response = await fetch(`http://localhost:5000${path}`, {
+  const response = await fetch(`${API_ORIGIN}${path}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -26,8 +27,8 @@ async function api(path, options = {}) {
 /* ---------- Static navigation and reference data ---------- */
 
 const TABS = [
-  { key: "Course Selection", icon: "▤" },
   { key: "Dashboard", icon: "▦" },
+  { key: "Course Selection", icon: "▤" },
   { key: "Profile", icon: "♙" },
   { key: "Attendance", icon: "◷" },
   { key: "Results", icon: "▥" },
@@ -36,133 +37,20 @@ const TABS = [
   { key: "Leave", icon: "✎" },
   { key: "Library", icon: "❖" },
   { key: "Fees", icon: "৳" },
-  { key: "Notices", icon: "✉" },
+  { key: "Notices", label: "Messages & Notices", icon: "✉" },
   { key: "Password", icon: "✱" },
-];
-
-const SUBJECT_ATTENDANCE = [
-  { code: "CSE-101", total: 24, present: 22 },
-  { code: "MAT-101", total: 22, present: 19 },
-  { code: "PHY-101", total: 20, present: 17 },
-  { code: "ENG-101", total: 16, present: 15 },
-  { code: "CSE-102", total: 21, present: 16 },
-];
-
-const SEMESTERS = [
-  {
-    name: "Semester 1",
-    rows: [
-      { code: "CSE-101", name: "Programming Fundamentals", credit: 3, marks: 86 },
-      { code: "MAT-101", name: "Calculus", credit: 3, marks: 72 },
-      { code: "PHY-101", name: "Physics I", credit: 3, marks: 64 },
-      { code: "ENG-101", name: "English Composition", credit: 2, marks: 78 },
-    ],
-  },
-  {
-    name: "Semester 2",
-    rows: [
-      { code: "CSE-102", name: "Digital Logic", credit: 3, marks: 81 },
-      { code: "MAT-102", name: "Linear Algebra", credit: 3, marks: 69 },
-      { code: "PHY-102", name: "Physics II", credit: 3, marks: 58 },
-      { code: "CSE-103", name: "Data Structures", credit: 3, marks: 90 },
-    ],
-  },
 ];
 
 const PERIODS = ["09:00 - 10:00", "10:00 - 11:00", "11:15 - 12:15", "12:15 - 01:15"];
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"];
 
-const ROUTINE = {
-  0: [
-    { code: "CSE-101", room: "Room 201" },
-    { code: "MAT-101", room: "Room 105" },
-    { code: "PHY-101", room: "Lab 2" },
-    { code: "ENG-101", room: "Room 110" },
-  ],
-  1: [
-    { code: "CSE-102", room: "Room 204" },
-    { code: "CSE-101", room: "Lab 1" },
-    { code: "MAT-101", room: "Room 105" },
-    { code: "PHY-101", room: "Room 301" },
-  ],
-  2: [
-    { code: "ENG-101", room: "Room 110" },
-    { code: "CSE-102", room: "Room 204" },
-    { code: "CSE-101", room: "Room 201" },
-    { code: "MAT-101", room: "Room 105" },
-  ],
-  3: [
-    { code: "PHY-101", room: "Lab 2" },
-    { code: "MAT-101", room: "Room 105" },
-    { code: "ENG-101", room: "Room 110" },
-    { code: "CSE-102", room: "Lab 3" },
-  ],
-  4: [
-    { code: "CSE-101", room: "Room 201" },
-    { code: "CSE-102", room: "Room 204" },
-    { code: "PHY-101", room: "Room 301" },
-    { code: "MAT-101", room: "Room 105" },
-  ],
-};
+const ROUTINE = {};
 
-
-const NOTICES = [
-  {
-    id: 1,
-    title: "Semester 2 final exam routine published",
-    category: "Exam",
-    date: "15 Nov 2026",
-    body: "The final examination for Semester 2 will begin on 5 December 2026. Students must clear all dues before collecting the admit card.",
-  },
-  {
-    id: 2,
-    title: "Annual sports day",
-    category: "Event",
-    date: "12 Nov 2026",
-    body: "The annual sports day will be held on 28 November at the college ground. All students are requested to register with their class representative.",
-  },
-  {
-    id: 3,
-    title: "College closed on 16 December",
-    category: "Holiday",
-    date: "10 Nov 2026",
-    body: "The college will remain closed on 16 December 2026 for Victory Day. Regular classes will resume on the next working day.",
-  },
-  {
-    id: 4,
-    title: "Fee payment deadline reminder",
-    category: "General",
-    date: "08 Nov 2026",
-    body: "Students with pending fees are requested to complete payment before 30 November 2026 to avoid a late fee.",
-  },
-  {
-    id: 5,
-    title: "Library timing change",
-    category: "General",
-    date: "02 Nov 2026",
-    body: "From this week the library will remain open from 9:00 AM to 6:00 PM on all working days.",
-  },
-];
-
-const NOTICE_CATEGORIES = ["All", "Exam", "Event", "Holiday", "General"];
-
-const EXAMS = [
-  { code: "CSE-102", date: "2026-12-05", time: "10:00 AM - 01:00 PM", room: "Hall A" },
-  { code: "MAT-101", date: "2026-12-07", time: "10:00 AM - 01:00 PM", room: "Hall A" },
-  { code: "PHY-101", date: "2026-12-09", time: "10:00 AM - 01:00 PM", room: "Hall B" },
-  { code: "ENG-101", date: "2026-12-12", time: "10:00 AM - 12:00 PM", room: "Hall B" },
-  { code: "CSE-101", date: "2026-12-14", time: "10:00 AM - 01:00 PM", room: "Hall A" },
-];
+const EXAMS = [];
 
 const LEAVE_TYPES = ["Sick leave", "Casual leave", "Family event", "Other"];
 
-const BOOKS = [
-  { id: 1, title: "Introduction to Algorithms", author: "T. Cormen", issued: "2026-11-05", due: "2026-11-19", returned: null },
-  { id: 2, title: "Calculus: Early Transcendentals", author: "J. Stewart", issued: "2026-10-20", due: "2026-11-03", returned: null },
-  { id: 3, title: "Digital Design", author: "M. Morris Mano", issued: "2026-11-12", due: "2026-11-26", returned: null },
-  { id: 4, title: "University Physics", author: "H. Young", issued: "2026-09-10", due: "2026-09-24", returned: "2026-09-22" },
-  { id: 5, title: "English Grammar in Use", author: "R. Murphy", issued: "2026-08-15", due: "2026-08-29", returned: "2026-08-28" },
-];
+const BOOKS = [];
 
 const FINE_PER_DAY = 5;
 
@@ -282,7 +170,7 @@ function StudentPortal({ user, onLogout }) {
       return;
     }
 
-    fetch("http://localhost:5000/api/me", {
+    fetch(`${API_ORIGIN}/api/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
@@ -355,7 +243,7 @@ function StudentPortal({ user, onLogout }) {
         <div className="sp-brand">
           <div className="brand-mark">G</div>
           <div>
-            <strong>Greenfield College</strong>
+            <strong>Greenfield University</strong>
             <span>Student Portal</span>
           </div>
         </div>
@@ -381,7 +269,7 @@ function StudentPortal({ user, onLogout }) {
             className={`sp-tab ${tab === item.key ? "sp-tab-active" : ""}`}
             onClick={() => setTab(item.key)}
           >
-            <span>{item.icon}</span> {item.key}
+            <span>{item.icon}</span> {item.label || item.key}
           </button>
         ))}
       </nav>
@@ -642,7 +530,7 @@ function DashboardTab({ student, goTo, courses }) {
           </div>
 
           {todayClasses.length === 0 ? (
-            <p className="sp-muted">No classes today. Enjoy your day off!</p>
+            <p className="sp-muted">Your timetable has not been published yet.</p>
           ) : (
             <ul className="sp-list">
               {todayClasses.map((c, i) => (
@@ -1078,7 +966,7 @@ function ResultsTab({ student }) {
             </div>
 
             <div className="sp-print-only">
-              <h3>Greenfield College</h3>
+              <h3>Greenfield University</h3>
               <p>Academic Transcript</p>
               <p>
                 Student: {student.name} · ID: {student.id}
@@ -1205,7 +1093,9 @@ function TimetableTab() {
       <p className="sp-sub">Your weekly timetable. Today is highlighted.</p>
 
       <section className="sp-card">
-        <div className="table-scroll">
+        {!Object.values(ROUTINE).some((entries) => entries.length > 0) ? (
+          <div className="sp-empty-state">Your timetable has not been published yet.</div>
+        ) : <div className="table-scroll">
           <table className="sp-table sp-routine">
             <thead>
               <tr>
@@ -1221,7 +1111,7 @@ function TimetableTab() {
                   <td>
                     <strong>{day}</strong>
                   </td>
-                  {ROUTINE[dayIndex].map((c, i) => (
+                  {(ROUTINE[dayIndex] || []).map((c, i) => (
                     <td key={i}>
                       <strong>{c.code}</strong>
                       <div className="sp-muted">{c.room}</div>
@@ -1231,7 +1121,7 @@ function TimetableTab() {
               ))}
             </tbody>
           </table>
-        </div>
+        </div>}
       </section>
     </>
   );
@@ -1240,8 +1130,7 @@ function TimetableTab() {
 function ExamsTab({ student, courses }) {
   const [showCard, setShowCard] = useState(false);
 
-  const totalDue =
-    FEES.reduce((s, f) => s + f.amount, 0) - FEES.reduce((s, f) => s + f.paid, 0);
+  const totalDue = 0;
 
   const upcoming = EXAMS.filter((e) => daysFromToday(e.date) >= 0);
   const next = upcoming[0];
@@ -1262,7 +1151,7 @@ function ExamsTab({ student, courses }) {
           <div className="sp-admit-head">
             <div className="brand-mark">G</div>
             <div>
-              <h3>Greenfield College</h3>
+              <h3>Greenfield University</h3>
               <span>Admit card · Semester 2 final examination</span>
             </div>
           </div>
@@ -1348,13 +1237,15 @@ function ExamsTab({ student, courses }) {
 
       <section className="sp-card">
         <div className="sp-card-head">
-          <h3>Semester 2 final exam schedule</h3>
-          <button className="button button-primary" onClick={() => setShowCard(true)}>
+          <h3>Published examination schedule</h3>
+          <button className="button button-primary" onClick={() => setShowCard(true)} disabled={!EXAMS.length}>
             View admit card
           </button>
         </div>
 
-        <div className="table-scroll">
+        {EXAMS.length === 0 ? (
+          <p className="sp-empty-state">No examination schedule has been published for your account.</p>
+        ) : <div className="table-scroll">
           <table className="sp-table">
             <thead>
               <tr>
@@ -1393,7 +1284,7 @@ function ExamsTab({ student, courses }) {
               })}
             </tbody>
           </table>
-        </div>
+        </div>}
       </section>
     </>
   );
@@ -1609,22 +1500,9 @@ function LibraryTab() {
   return (
     <>
       <h2 className="sp-title">Library</h2>
-      <p className="sp-sub">Books you have borrowed, due dates and fines.</p>
+      <p className="sp-sub">Library borrowing information for your account.</p>
 
-      <div className="sp-stats">
-        <div className="sp-stat">
-          <span>Currently issued</span>
-          <strong>{current.length}</strong>
-        </div>
-        <div className="sp-stat">
-          <span>Overdue</span>
-          <strong className={overdueCount > 0 ? "sp-low" : ""}>{overdueCount}</strong>
-        </div>
-        <div className="sp-stat">
-          <span>Fine</span>
-          <strong className={totalFine > 0 ? "sp-low" : ""}>{taka(totalFine)}</strong>
-        </div>
-      </div>
+      <div className="sp-empty-state">Library loan records are not connected to the student portal yet. No borrowing balance or fine amount is being assumed.</div>
 
       <section className="sp-card">
         <div className="sp-card-head">
@@ -1632,7 +1510,7 @@ function LibraryTab() {
         </div>
 
         {current.length === 0 ? (
-          <p className="sp-muted">You have no books issued right now.</p>
+          <p className="sp-muted">No issued-book records are available from the library system.</p>
         ) : (
           <ul className="sp-list">
             {current.map((b) => {
@@ -1661,9 +1539,7 @@ function LibraryTab() {
           </ul>
         )}
 
-        <p className="sp-muted" style={{ marginTop: 12 }}>
-          Late fine: {taka(FINE_PER_DAY)} per day for each overdue book.
-        </p>
+
       </section>
 
       <section className="sp-card" style={{ marginTop: 16 }}>
@@ -1671,7 +1547,7 @@ function LibraryTab() {
           <h3>Borrowing history</h3>
         </div>
 
-        <div className="table-scroll">
+        {history.length === 0 ? <p className="sp-muted">No borrowing history is available.</p> : <div className="table-scroll">
           <table className="sp-table">
             <thead>
               <tr>
@@ -1697,7 +1573,7 @@ function LibraryTab() {
               ))}
             </tbody>
           </table>
-        </div>
+        </div>}
       </section>
     </>
   );
@@ -1794,17 +1670,26 @@ function FeesTab({ student }) {
 }
 
 function NoticesTab() {
-  const [category, setCategory] = useState("All");
-  const [openId, setOpenId] = useState(null);
-  const [readIds, setReadIds] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [announcementError, setAnnouncementError] = useState("");
 
-  useEffect(() => {
-    api("/api/my/messages")
-      .then(setAnnouncements)
-      .catch((error) => setAnnouncementError(error.message || "Could not load announcements."));
+  const loadAnnouncements = useCallback(async () => {
+    setLoading(true);
+    setAnnouncementError("");
+    try {
+      const rows = await api("/api/my/messages");
+      setAnnouncements(Array.isArray(rows) ? rows : []);
+    } catch (error) {
+      setAnnouncementError(error.message || "Could not load messages.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadAnnouncements();
+  }, [loadAnnouncements]);
 
   async function openAnnouncement(message) {
     if (message.is_read) return;
@@ -1816,96 +1701,35 @@ function NoticesTab() {
     }
   }
 
-  const visible = NOTICES.filter(
-    (n) => category === "All" || n.category === category
-  );
-  const unreadCount = NOTICES.filter((n) => !readIds.includes(n.id)).length;
-
-  function toggleNotice(id) {
-    setOpenId(openId === id ? null : id);
-    setReadIds((current) => (current.includes(id) ? current : [...current, id]));
-  }
-
-  function markAllRead() {
-    setReadIds(NOTICES.map((n) => n.id));
-  }
+  const unreadCount = announcements.filter((item) => !item.is_read).length;
 
   return (
     <>
-      <h2 className="sp-title">Notice board</h2>
-      <p className="sp-sub">
-        Official announcements from the college. You have {unreadCount} unread
-        notice{unreadCount === 1 ? "" : "s"}.
-      </p>
-
-      <section className="sp-card" style={{ marginBottom: 18 }}>
+      <h2 className="sp-title">Messages & notices</h2>
+      <p className="sp-sub">Official messages and announcements sent to your student account.</p>
+      <section className="sp-card">
         <div className="sp-card-head">
           <div>
-            <h3 style={{ margin: 0 }}>Messages from administration</h3>
-            <p className="sp-muted" style={{ margin: "5px 0 0" }}>Direct announcements sent by your college.</p>
+            <h3>From university administration</h3>
+            <p className="sp-muted">{unreadCount} unread message{unreadCount === 1 ? "" : "s"}</p>
           </div>
-          <span className="sp-muted">{announcements.filter((item) => !item.is_read).length} unread</span>
+          <button type="button" className="sp-link" onClick={loadAnnouncements} disabled={loading}>Refresh</button>
         </div>
-        {announcementError && <p className="sp-muted">{announcementError}</p>}
-        {announcements.length === 0 ? (
-          <p className="sp-muted">No new messages from administration.</p>
+        {announcementError && <p className="sp-alert sp-alert-error" role="alert">{announcementError}</p>}
+        {loading ? <p className="sp-muted">Loading your messages…</p> : announcements.length === 0 ? (
+          <p className="sp-empty-state">There are no messages or notices for your account yet.</p>
         ) : (
           <ul className="sp-notices">
             {announcements.map((message) => (
               <li key={message.id}>
-                <button className="sp-notice-row" onClick={() => openAnnouncement(message)}>
-                  <span className={`sp-unread ${message.is_read ? "sp-unread-off" : ""}`} />
+                <button type="button" className="sp-notice-row" onClick={() => openAnnouncement(message)} aria-label={`Mark ${message.subject || "message"} as read`}>
+                  <span className={`sp-unread ${message.is_read ? "sp-unread-off" : ""}`} aria-hidden="true" />
                   <div className="sp-notice-text">
                     <strong>{message.subject}</strong>
-                    <span>{message.sender_email || "College administration"} · {new Date(message.created_at).toLocaleDateString()}</span>
+                    <span>{message.sender_email || "University administration"} · {message.created_at ? new Date(message.created_at).toLocaleDateString() : "Date unavailable"}</span>
                     <p className="sp-notice-body">{message.body}</p>
                   </div>
                 </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section className="sp-card">
-        <div className="sp-card-head">
-          <div className="sp-chips">
-            {NOTICE_CATEGORIES.map((c) => (
-              <button
-                key={c}
-                className={`sp-chip ${category === c ? "sp-chip-active" : ""}`}
-                onClick={() => setCategory(c)}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
-
-          <button className="sp-link" onClick={markAllRead}>
-            Mark all as read
-          </button>
-        </div>
-
-        {visible.length === 0 ? (
-          <p className="sp-muted">No notices in this category.</p>
-        ) : (
-          <ul className="sp-notices">
-            {visible.map((n) => (
-              <li key={n.id}>
-                <button className="sp-notice-row" onClick={() => toggleNotice(n.id)}>
-                  <span
-                    className={`sp-unread ${readIds.includes(n.id) ? "sp-unread-off" : ""}`}
-                  />
-                  <div className="sp-notice-text">
-                    <strong>{n.title}</strong>
-                    <span>
-                      {n.category} · {n.date}
-                    </span>
-                  </div>
-                  <b>{openId === n.id ? "−" : "+"}</b>
-                </button>
-
-                {openId === n.id && <p className="sp-notice-body">{n.body}</p>}
               </li>
             ))}
           </ul>
@@ -1946,7 +1770,7 @@ function PasswordTab() {
     try {
       const token = localStorage.getItem("token");
 
-      const response = await fetch("http://localhost:5000/api/change-password", {
+      const response = await fetch(`${API_ORIGIN}/api/change-password`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

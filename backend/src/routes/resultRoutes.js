@@ -17,7 +17,7 @@ const {
   requireStudent,
 } = require("../controllers/leaveController");
 
-// Admin / Super Admin: manage all results
+// Admin: manage all results
 router.get(
   "/results",
   requireAuth,

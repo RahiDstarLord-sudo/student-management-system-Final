@@ -46,3 +46,18 @@ backend/seed.backup.js
 backend/database/backups/
 # Database backups
 backend/database/backups/
+*.backup*
+*.bak
+*.old
+*.orig
+*.copy
+
+# Backup and duplicate artifacts
+*.backup*
+*.bak
+*.old
+*.orig
+*.copy
+*.before_*
+*duplicate*
+**/*backup*/

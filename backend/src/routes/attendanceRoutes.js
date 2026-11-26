@@ -37,7 +37,7 @@ router.put(
   saveTeacherAttendance
 );
 
-// Admin / Super Admin: attendance management
+// Admin: attendance management
 router.get(
   "/attendance/report",
   requireAuth,

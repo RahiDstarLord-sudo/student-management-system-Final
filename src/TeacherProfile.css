@@ -1,0 +1,17 @@
+/* Teacher profile form and approval status */
+.teacher-profile-panel { margin-top: 24px; }
+.teacher-profile-status { margin: 12px 0 18px; padding: 12px 14px; border-radius: 10px; border: 1px solid #d5deea; background: #f8fafc; color: #26364e; }
+.teacher-profile-status.is-pending { background: #fff7ed; border-color: #fed7aa; color: #9a3412; }
+.teacher-profile-status.is-rejected { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+.teacher-profile-status.is-approved { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
+.teacher-profile-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.teacher-profile-form label { display: flex; flex-direction: column; gap: 7px; color: #26364e; font-weight: 600; font-size: 13px; }
+.teacher-profile-form input, .teacher-profile-form select, .teacher-profile-form textarea { width: 100%; min-width: 0; border: 1px solid #aebbd0; border-radius: 9px; padding: 11px 12px; color: #172033; background: #fff; font: inherit; }
+.teacher-profile-form input[readonly] { background: #eef2f7; color: #526078; }
+.teacher-profile-form textarea { resize: vertical; }
+.teacher-profile-wide { grid-column: 1 / -1; }
+.teacher-profile-actions { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 8px; }
+.teacher-profile-actions span { color: #526078; font-size: 12px; }
+.teacher-profile-actions button { border: 0; border-radius: 9px; padding: 12px 18px; background: #175cd3; color: #fff; font-weight: 700; cursor: pointer; }
+.teacher-profile-actions button:disabled { opacity: .55; cursor: not-allowed; }
+@media (max-width: 640px) { .teacher-profile-form { grid-template-columns: 1fr; } .teacher-profile-wide { grid-column: auto; } .teacher-profile-actions { align-items: stretch; flex-direction: column; } }

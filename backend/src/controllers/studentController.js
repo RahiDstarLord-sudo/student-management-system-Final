@@ -1,247 +1,236 @@
-
 const db = require("../config/db");
 const { writeAuditLog } = require("../utils/auditLogger");
 
 const VALID_YEARS = ["1st Year", "2nd Year", "3rd Year", "4th Year"];
-const VALID_STATUSES = ["Active", "Pending", "Inactive"];
+const VALID_STATUSES = ["Active", "Inactive"];
 
 function getInitials(name) {
-  const cleanName = String(name || "").trim();
-
-  if (!cleanName) return "?";
-
-  return cleanName
-    .split(/\s+/)
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  const clean = String(name || "").trim();
+  return clean ? clean.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase() : "?";
 }
 
-// Get all students
-function getAllStudents(req, res) {
-  db.query(
-  `SELECT * FROM students
-   WHERE registration_status = 'approved'
-   ORDER BY id DESC`,
-  (err, rows) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Database error" });
-    }
+async function getAllStudents(req, res) {
+  try {
+    const [rows] = await db.promise().query(
+      "SELECT s.student_id, s.name, s.email, s.course, s.course_id, s.year, s.status, " +
+      "s.department_id, d.department_name, c.course_name AS assigned_course_name, " +
+      "u.id AS account_id, u.status AS account_status " +
+      "FROM students s " +
+      "LEFT JOIN departments d ON d.id = s.department_id " +
+      "LEFT JOIN courses c ON c.id = s.course_id " +
+      "LEFT JOIN users u ON u.student_id = s.student_id AND u.role = 'student' " +
+      "WHERE s.registration_status = 'approved' ORDER BY s.id DESC"
+    );
 
-    const students = rows.map((row) => ({
+    return res.json(rows.map((row) => ({
       id: row.student_id,
       name: row.name,
       email: row.email,
-      course: row.course,
+      course: row.assigned_course_name || row.course,
+      courseId: row.course_id,
       year: row.year,
       status: row.status,
+      departmentId: row.department_id,
+      department: row.department_name,
+      accountLinked: Boolean(row.account_id),
+      accountStatus: row.account_status || "Not linked",
       initials: getInitials(row.name),
-    }));
-
-    res.json(students);
-  });
+    })));
+  } catch (err) {
+    console.error("Student list error:", err);
+    return res.status(500).json({ error: "Could not load students" });
+  }
 }
 
-// Add a new student
-function addStudent(req, res) {
-  const { name, email, course } = req.body;
+async function updateStudent(req, res) {
+  const studentId = String(req.params.id || "").trim();
+  const name = String(req.body?.name || "").trim();
+  const email = String(req.body?.email || "").trim().toLowerCase();
+  const year = String(req.body?.year || "").trim();
+  const status = String(req.body?.status || "").trim();
+  const departmentId = req.body?.departmentId ? Number(req.body.departmentId) : null;
+  const courseId = req.body?.courseId ? Number(req.body.courseId) : null;
 
-  if (!name || !email || !course) {
-    return res
-      .status(400)
-      .json({ error: "Name, email and course are required" });
+  if (!studentId || !name || !email || !VALID_YEARS.includes(year) || !VALID_STATUSES.includes(status)) {
+    return res.status(400).json({ error: "Provide a valid name, email, year and account status" });
   }
 
-  const studentId = `GC-${Date.now().toString().slice(-6)}`;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || name.length > 100 || email.length > 100) {
+    return res.status(400).json({ error: "Student information is invalid or exceeds the allowed length" });
+  }
 
-  db.query(
-    "INSERT INTO students (student_id, name, email, course) VALUES (?, ?, ?, ?)",
-    [studentId, name, email, course],
-    (err) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).json({ error: "Database error" });
-      }
+  if ((departmentId === null) !== (courseId === null) ||
+      (departmentId !== null && (!Number.isInteger(departmentId) || departmentId < 1)) ||
+      (courseId !== null && (!Number.isInteger(courseId) || courseId < 1))) {
+    return res.status(400).json({ error: "Select both a valid department and course" });
+  }
 
-      writeAuditLog(req, {
-        action: "STUDENT_CREATED",
-        entityType: "student",
-        entityId: studentId,
-        newValues: { name, email, course },
-      });
+  let connection;
+  try {
+    connection = await db.promise().getConnection();
+    await connection.beginTransaction();
 
-      res.status(201).json({
-        id: studentId,
-        name,
-        email,
-        course,
-        year: "1st Year",
-        status: "Active",
-        initials: getInitials(name),
-      });
+    const [found] = await connection.query(
+      "SELECT student_id, name, email, course, course_id, department_id, year, status, registration_status FROM students WHERE student_id = ? FOR UPDATE",
+      [studentId]
+    );
+
+    if (!found.length || found[0].registration_status !== "approved") {
+      await connection.rollback();
+      return res.status(404).json({ error: "Approved student record not found" });
     }
-  );
-}
 
-// Update a student
-function updateStudent(req, res) {
-  const { name, email, course, year, status } = req.body;
+    const oldStudent = found[0];
 
-  if (!name || !email || !course || !year || !status) {
-    return res.status(400).json({ error: "All fields are required" });
-  }
+    const [duplicate] = await connection.query(
+      "SELECT id FROM users WHERE LOWER(email) = LOWER(?) AND student_id <> ? LIMIT 1",
+      [email, studentId]
+    );
 
-  if (!VALID_YEARS.includes(year) || !VALID_STATUSES.includes(status)) {
-    return res.status(400).json({ error: "Invalid year or status" });
-  }
+    if (duplicate.length) {
+      await connection.rollback();
+      return res.status(409).json({ error: "Email address is already used by another account" });
+    }
 
-  const studentId = req.params.id;
+    let finalDepartmentId = oldStudent.department_id;
+    let finalCourseId = oldStudent.course_id;
+    let finalCourse = oldStudent.course;
 
-  db.query(
-    `SELECT student_id, name, email, course, year, status
-     FROM students
-     WHERE student_id = ?
-     LIMIT 1`,
-    [studentId],
-    (selectErr, rows) => {
-      if (selectErr) {
-        console.error(selectErr);
-        return res.status(500).json({ error: "Database error" });
+    if (departmentId !== null && courseId !== null) {
+      const [departments] = await connection.query(
+        "SELECT id FROM departments WHERE id = ? AND status = 'Active' LIMIT 1",
+        [departmentId]
+      );
+
+      if (!departments.length) {
+        await connection.rollback();
+        return res.status(400).json({ error: "Selected department is unavailable" });
       }
 
-      const oldStudent = rows[0];
+      const [courses] = await connection.query(
+        "SELECT id, course_name FROM courses WHERE id = ? AND department_id = ? LIMIT 1",
+        [courseId, departmentId]
+      );
 
-      if (!oldStudent) {
-        return res.status(404).json({ error: "Student not found" });
+      if (!courses.length) {
+        await connection.rollback();
+        return res.status(400).json({ error: "Selected course does not belong to this department" });
       }
 
-      db.query(
-        `UPDATE students
-         SET name = ?, email = ?, course = ?, year = ?, status = ?
-         WHERE student_id = ?`,
-        [name, email, course, year, status, studentId],
-        (err, result) => {
-          if (err) {
-            console.error(err);
-            return res.status(500).json({ error: "Database error" });
-          }
+      finalDepartmentId = departmentId;
+      finalCourseId = courseId;
+      finalCourse = courses[0].course_name;
+    }
 
-          if (result.affectedRows === 0) {
-            return res.status(404).json({ error: "Student not found" });
-          }
+    await connection.query(
+      "UPDATE students SET name = ?, email = ?, course = ?, department_id = ?, course_id = ?, year = ?, status = ? WHERE student_id = ?",
+      [name, email, finalCourse, finalDepartmentId, finalCourseId, year, status, studentId]
+    );
 
-          writeAuditLog(req, {
-            action: "STUDENT_UPDATED",
-            entityType: "student",
-            entityId: studentId,
-            oldValues: oldStudent,
-            newValues: { name, email, course, year, status },
-          });
+    await connection.query(
+      "UPDATE users SET email = ?, status = ? WHERE student_id = ? AND role = 'student'",
+      [email, status === "Active" ? "active" : "suspended", studentId]
+    );
 
-          res.json({
-            id: studentId,
-            name,
-            email,
-            course,
-            year,
-            status,
-            initials: getInitials(name),
-          });
-        }
+    if (status !== "Active") {
+      await connection.query(
+        "UPDATE user_sessions SET revoked_at = NOW() WHERE user_id IN (SELECT id FROM users WHERE student_id = ?) AND revoked_at IS NULL",
+        [studentId]
       );
     }
-  );
-}
 
-// Delete a student
-function deleteStudent(req, res) {
-  const studentId = req.params.id;
+    const [departmentRows] = finalDepartmentId
+      ? await connection.query("SELECT department_name FROM departments WHERE id = ?", [finalDepartmentId])
+      : [[]];
 
-  db.query(
-    `SELECT student_id, name, email, course, year, status
-     FROM students
-     WHERE student_id = ?
-     LIMIT 1`,
-    [studentId],
-    (selectErr, rows) => {
-      if (selectErr) {
-        console.error(selectErr);
-        return res.status(500).json({ error: "Database error" });
+    await connection.commit();
+
+    writeAuditLog(req, {
+      action: "STUDENT_UPDATED",
+      entityType: "student",
+      entityId: studentId,
+      oldValues: oldStudent,
+      newValues: {
+        name, email, course: finalCourse,
+        departmentId: finalDepartmentId, courseId: finalCourseId, year, status
       }
+    });
 
-      const oldStudent = rows[0];
-
-      if (!oldStudent) {
-        return res.status(404).json({ error: "Student not found" });
-      }
-
-      db.query(
-        "DELETE FROM students WHERE student_id = ?",
-        [studentId],
-        (err, result) => {
-          if (err) {
-            console.error(err);
-            return res.status(500).json({ error: "Database error" });
-          }
-
-          if (result.affectedRows === 0) {
-            return res.status(404).json({ error: "Student not found" });
-          }
-
-          writeAuditLog(req, {
-            action: "STUDENT_DELETED",
-            entityType: "student",
-            entityId: studentId,
-            oldValues: oldStudent,
-          });
-
-          res.json({ success: true });
-        }
-      );
+    return res.json({
+      id: studentId,
+      name,
+      email,
+      course: finalCourse,
+      courseId: finalCourseId,
+      departmentId: finalDepartmentId,
+      department: departmentRows[0]?.department_name || null,
+      year,
+      status,
+      accountLinked: true,
+      accountStatus: status === "Active" ? "active" : "suspended",
+      initials: getInitials(name)
+    });
+  } catch (err) {
+    if (connection) await connection.rollback();
+    if (err.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({ error: "Email address is already in use" });
     }
-  );
-}
-
-// Get the logged-in student's own profile
-function getMyProfile(req, res) {
-  if (req.user.role !== "student") {
-    return res.status(403).json({ error: "Students only" });
+    console.error("Student update error:", err);
+    return res.status(500).json({ error: "Could not update student" });
+  } finally {
+    if (connection) connection.release();
   }
-
-  db.query(
-    "SELECT * FROM students WHERE student_id = ?",
-    [req.user.studentId],
-    (err, rows) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).json({ error: "Database error" });
-      }
-
-      const row = rows[0];
-
-      if (!row) {
-        return res.status(404).json({ error: "Student record not found" });
-      }
-
-      res.json({
-        id: row.student_id,
-        name: row.name,
-        email: row.email,
-        course: row.course,
-        year: row.year,
-        status: row.status,
-        initials: getInitials(row.name),
-      });
-    }
-  );
 }
 
-module.exports = {
-  getAllStudents,
-  addStudent,
-  updateStudent,
-  deleteStudent,
-  getMyProfile,
-};
+// Legacy DELETE endpoint now performs safe deactivation; it never deletes academic records.
+async function deleteStudent(req, res) {
+  const studentId = String(req.params.id || "").trim();
+  if (!studentId) return res.status(400).json({ error: "Student ID is required" });
+  let connection;
+  try {
+    connection = await db.promise().getConnection();
+    await connection.beginTransaction();
+    const [rows] = await connection.query(
+      "SELECT student_id, name, status, registration_status FROM students WHERE student_id = ? FOR UPDATE", [studentId]
+    );
+    if (!rows.length || rows[0].registration_status !== "approved") {
+      await connection.rollback();
+      return res.status(404).json({ error: "Approved student record not found" });
+    }
+    await connection.query("UPDATE students SET status = 'Inactive' WHERE student_id = ?", [studentId]);
+    await connection.query("UPDATE users SET status = 'suspended' WHERE student_id = ? AND role = 'student'", [studentId]);
+    await connection.query("UPDATE user_sessions SET revoked_at = NOW() WHERE user_id IN (SELECT id FROM users WHERE student_id = ?) AND revoked_at IS NULL", [studentId]);
+    await connection.commit();
+    writeAuditLog(req, { action: "STUDENT_DEACTIVATED", entityType: "student", entityId: studentId, oldValues: rows[0], newValues: { status: "Inactive", accountStatus: "suspended" } });
+    return res.json({ success: true, message: "Student account deactivated. Academic records were preserved." });
+  } catch (err) {
+    if (connection) await connection.rollback();
+    console.error("Student deactivation error:", err);
+    return res.status(500).json({ error: "Could not deactivate student" });
+  } finally {
+    if (connection) connection.release();
+  }
+}
+
+async function getMyProfile(req, res) {
+  if (req.user.role !== "student" || !req.user.studentId) return res.status(403).json({ error: "Students only" });
+  try {
+    const [rows] = await db.promise().query(
+      `SELECT s.student_id, s.name, s.email, s.course, s.year, s.status,
+              s.department_id, d.department_name, sp.phone, sp.nid
+       FROM students s
+       LEFT JOIN departments d ON d.id = s.department_id
+       LEFT JOIN student_profiles sp ON sp.student_id = s.student_id
+       WHERE s.student_id = ? AND s.registration_status = 'approved' LIMIT 1`,
+      [req.user.studentId]
+    );
+    if (!rows.length) return res.status(404).json({ error: "Student record not found" });
+    const row = rows[0];
+    return res.json({ id: row.student_id, name: row.name, email: row.email, course: row.course, year: row.year, status: row.status, departmentId: row.department_id, department: row.department_name, phone: row.phone, nid: row.nid, initials: getInitials(row.name) });
+  } catch (err) {
+    console.error("Student profile error:", err);
+    return res.status(500).json({ error: "Could not load student profile" });
+  }
+}
+
+module.exports = { getAllStudents, updateStudent, deleteStudent, getMyProfile };

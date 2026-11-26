@@ -1,7 +1,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
+import { API_BASE } from "./services/apiConfig";
 
-const API = "http://localhost:5000/api";
 
 export default function CourseRequestsPage() {
   const [requests, setRequests] = useState([]);
@@ -16,7 +16,7 @@ export default function CourseRequestsPage() {
   });
 
   const request = async (path, options = {}) => {
-    const response = await fetch(`${API}${path}`, {
+    const response = await fetch(`${API_BASE}${path}`, {
       ...options,
       headers: headers(),
     });

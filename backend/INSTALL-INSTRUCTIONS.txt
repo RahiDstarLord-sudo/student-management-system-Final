@@ -1,0 +1,26 @@
+﻿
+------------------------------------------------------------
+MIGRATION RUNNER - UPDATED USAGE
+------------------------------------------------------------
+
+Check migration status (read-only):
+    npm run db:migrate:status
+
+Baseline an existing database (one-time only):
+    npm run db:migrate:baseline
+
+Apply pending migrations:
+    npm run db:migrate
+
+IMPORTANT:
+- The existing greenfield_college database has migrations 001-017
+  recorded as baseline. Their SQL was not re-executed.
+- Never rename or edit a migration file after it has been recorded.
+- New migration files must follow the sequence:
+  018_description.sql, 019_description.sql, and so on.
+- Review and back up the database before applying a new migration.
+- MariaDB DDL statements may commit implicitly. A failed migration
+  may have partially changed the schema and must be inspected before retry.
+- Do not run the baseline command again after migration records exist.
+- The application server does not automatically execute migrations.
+

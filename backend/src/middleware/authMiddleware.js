@@ -58,7 +58,8 @@ function requireAuth(req, res, next) {
       t.email AS teacher_email,
       t.department AS teacher_department,
       t.designation AS teacher_designation,
-      t.status AS teacher_status
+      t.status AS teacher_status,
+      t.registration_status AS teacher_registration_status
     FROM users u
     INNER JOIN user_sessions us
       ON us.user_id = u.id
@@ -113,6 +114,7 @@ function requireAuth(req, res, next) {
       if (
         !user.teacher_record_id ||
         !user.teacher_code ||
+        user.teacher_registration_status !== "approved" ||
         String(user.teacher_status || "").toLowerCase() !== "active"
       ) {
         return res.status(403).json({
@@ -167,18 +169,6 @@ function requireAuth(req, res, next) {
 function requireStaff(req, res, next) {
   if (!req.user || req.user.role !== "admin") {
     return res.status(403).json({ error: "Admin access required" });
-  }
-
-  return next();
-}
-
-// Backward-compatible middleware.
-// Existing routes using requireSuperAdmin will now allow Admin.
-function requireSuperAdmin(req, res, next) {
-  if (!req.user || req.user.role !== "admin") {
-    return res.status(403).json({
-      error: "Admin access required",
-    });
   }
 
   return next();
@@ -255,7 +245,6 @@ function requirePermission(permissionKey) {
 module.exports = {
   requireAuth,
   requireStaff,
-  requireSuperAdmin,
   requireTeacher,
   requireRole,
   requirePermission,

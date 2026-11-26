@@ -1,0 +1,207 @@
+﻿GREENFIELD COLLEGE STUDENT MANAGEMENT SYSTEM
+DATABASE MIGRATION & INSTALLATION GUIDE
+=========================================
+
+1. IMPORTANT PROJECT BACKUP
+---------------------------
+Before updating source files or changing the database:
+
+- Back up the complete project folder.
+- Export the greenfield_college database using phpMyAdmin.
+- Keep the database export in a safe location outside the project folder.
+- Never share backend/.env or database passwords.
+
+2. DATABASE CONFIGURATION
+-------------------------
+The backend reads database configuration from:
+
+  backend/.env
+
+Keep the existing database credentials and configuration.
+The migration runner uses the same DB_HOST, DB_PORT, DB_USER,
+DB_PASSWORD and DB_NAME settings.
+
+The verified existing database is:
+
+  Database: greenfield_college
+  Server: MariaDB 10.11.16
+
+3. MIGRATION FILES
+------------------
+SQL migration files are stored in:
+
+  backend/database/migrations/
+
+Current migration sequence:
+
+  001_create_identity_tables.sql
+  002_create_academic_structure.sql
+  003_create_student_profile_tables.sql
+  004_create_teacher_profile_tables.sql
+  005_upgrade_course_assignments.sql
+  006_upgrade_attendance.sql
+  007_upgrade_examinations_results.sql
+  008_upgrade_financial_relationships.sql
+  009_create_communication_security.sql
+  010_student_registration_workflow.sql
+  011_extend_user_roles.sql
+  012_add_teacher_user_id.sql
+  013_create_exam_results.sql
+  014_enforce_user_sessions.sql
+  015_assign_students_to_departments_courses.sql
+  016_id_based_student_teacher_registration.sql
+  017_enforce_teacher_course_assignment_uniqueness.sql
+
+Do not rename, reorder, edit, or manually import an already-applied
+migration. Applied migration files are tracked by SHA-256 checksum.
+
+Migration 017 has already been applied to the existing database.
+NEVER execute it again against that database.
+
+4. EXISTING DATABASE BASELINE
+-----------------------------
+The existing greenfield_college database has already passed the
+migration schema preflight for migrations 001-017.
+
+Its migration history is recorded in the schema_migrations table.
+All 17 entries have execution_type = 'baseline'.
+
+Baseline means the schema was verified and recorded as already
+existing. It does NOT mean the SQL files were executed again.
+
+To inspect migration status:
+
+  cd backend
+  npm run db:migrate:status
+
+The status command is read-only. It reports recorded migrations
+and verifies their current file checksums.
+
+To establish a baseline on the specifically verified existing
+database, only when its migration history is empty:
+
+  cd backend
+  npm run db:migrate:baseline
+
+The baseline command is restricted to the greenfield_college
+database. It runs schema preflight checks before writing history.
+It does not execute migration SQL. It refuses to add baseline
+records if migration history already contains records.
+
+Do not use the baseline command as a substitute for installing
+migrations on a new database.
+
+5. MIGRATION SAFETY RULES
+-------------------------
+- Never run an already-applied migration again.
+- Never edit an applied migration to change its behavior.
+- Create a new, sequentially numbered migration for future schema changes.
+- Review and back up the database before applying schema changes.
+- Check migration status and checksums before any future migration work.
+- Do not enable automatic migrations during backend startup.
+- Do not assume MariaDB DDL can be rolled back transactionally.
+  Many DDL statements cause implicit commits.
+- If a migration fails partway through, stop and inspect the actual
+  database schema before attempting any retry or repair.
+- Do not manually delete migration history records to bypass checks.
+
+The current runner supports status and existing-database baseline
+only. Applying pending migrations is not enabled yet.
+
+6. FRESH DATABASE INSTALLATION
+------------------------------
+The current migration set has not yet been certified as a complete,
+standalone fresh-install procedure.
+
+Some migrations depend on base application tables and existing
+schema objects. Before using these files on a new/empty database,
+the base schema and migration dependencies must be inspected and
+a dedicated fresh-install process must be verified.
+
+Do not import all SQL files blindly into a new database.
+
+7. BACKEND STARTUP
+------------------
+Open a terminal:
+
+  cd backend
+  node server.js
+
+Keep backend/.env configured.
+
+Database migrations are not automatically executed by server startup.
+
+8. FRONTEND STARTUP / BUILD
+---------------------------
+From the project root:
+
+  npm run dev
+
+For production compilation:
+
+  npm run build
+
+9. ID-BASED STUDENT & TEACHER REGISTRATION WORKFLOW
+---------------------------------------------------
+1. Superadmin opens Registration & IDs.
+2. Generate Student ID or Teacher ID and securely share the ID
+   and one-time activation code.
+3. Registrant opens the public registration form, chooses Student
+   or Teacher, verifies the ID, enters personal details and creates
+   a password.
+4. The new login account is created in suspended state.
+5. Superadmin reviews the request.
+6. Student approval requires an existing department, course,
+   active academic session and semester.
+7. Teacher approval requires an existing department and permits
+   assignment of existing courses.
+8. Approval activates the linked user account. Rejection leaves
+   the account suspended.
+9. Unused IDs can be revoked from the Generated IDs tab.
+
+10. IMPORTANT APPLICATION BEHAVIOR
+----------------------------------
+- The Admin Student directory has no direct Add Student workflow.
+- The Teacher directory has no direct Add Teacher workflow.
+- Legacy DELETE actions deactivate accounts and preserve records.
+- Registrants choose their password during registration.
+- Approval does not reveal or return a password.
+- Department, course, academic session and semester options come
+  from database records.
+- Backend authorization and validation control registration,
+  approval and portal access.
+- Pending accounts cannot access student or teacher portals.
+
+11. VERIFICATION CHECKLIST
+--------------------------
+[ ] Superadmin can open Registration & IDs.
+[ ] Student IDs and one-time activation codes can be generated.
+[ ] Teacher IDs and one-time activation codes can be generated.
+[ ] Valid unused IDs are accepted by the registration form.
+[ ] Invalid, expired, revoked, duplicate and used IDs are rejected.
+[ ] Pending accounts cannot access portals.
+[ ] Superadmin can review, approve and reject registration requests.
+[ ] Student approval stores department/course and enrollment data.
+[ ] Teacher approval links the user and teacher records.
+[ ] Approved users can sign in with their credentials.
+[ ] Student and teacher self-service endpoints remain properly scoped.
+[ ] Student and teacher roles cannot access admin-only endpoints.
+[ ] Deactivation suspends login and preserves academic records.
+[ ] Existing admin, student and teacher login flows still work.
+[ ] Migration status reports matching checksums.
+
+12. CURRENT MIGRATION SYSTEM STATUS
+-----------------------------------
+Database: greenfield_college
+Database engine: MariaDB 10.11.16
+Migration files: 17
+Schema preflight: 17/17 passed
+Baseline history records: 17
+Checksum verification: 17/17 passed
+Migration SQL re-execution during baseline: none
+
+The baseline operation only created migration history records.
+It did not rerun the existing migration SQL or intentionally
+modify existing application records.
+
+END OF GUIDE

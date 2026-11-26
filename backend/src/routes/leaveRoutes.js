@@ -30,7 +30,7 @@ router.delete(
   cancelMyLeave
 );
 
-// Admin / Super Admin: list all leave requests
+// Admin: list all leave requests
 router.get(
   "/leaves",
   requireAuth,
@@ -38,7 +38,7 @@ router.get(
   getAllLeaves
 );
 
-// Admin / Super Admin: approve or reject a request
+// Admin: approve or reject a request
 router.put(
   "/leaves/:id",
   requireAuth,

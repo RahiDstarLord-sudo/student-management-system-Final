@@ -17,7 +17,7 @@ const {
 
 const { requireStudent } = require("../controllers/leaveController");
 
-// Admin / Super Admin: message management
+// Admin: message management
 router.get(
   "/messages",
   requireAuth,
@@ -36,7 +36,7 @@ router.post(
 // Controller enforces recipient ownership.
 router.put("/messages/:id/read", requireAuth, markMessageRead);
 
-// Admin / Super Admin: delete messages (controller enforces sender ownership).
+// Admin: delete messages (controller enforces sender ownership).
 router.delete(
   "/messages/:id",
   requireAuth,

@@ -205,53 +205,111 @@ function updateCourse(req, res) {
 }
 
 // Delete a course
-function deleteCourse(req, res) {
-  const id = req.params.id;
+async function deleteCourse(req, res) {
+  const id = Number(req.params.id);
 
-  db.query(
-    `SELECT id, course_code, course_name, teacher, credits, department_id, semester_id
-     FROM courses
-     WHERE id = ?`,
-    [id],
-    (findErr, rows) => {
-      if (findErr) {
-        console.error("Failed to load course before deletion:", findErr);
-        return res.status(500).json({ error: "Could not delete course" });
-      }
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: "Invalid course ID" });
+  }
 
-      if (!rows.length) {
-        return res.status(404).json({ error: "Course not found" });
-      }
+  let connection;
 
-      const oldCourse = rows[0];
+  try {
+    connection = await db.promise().getConnection();
+    await connection.beginTransaction();
 
-      db.query(
-        "DELETE FROM courses WHERE id = ?",
-        [id],
-        (err, result) => {
-          if (err) {
-            console.error(err);
-            return res.status(500).json({ error: "Could not delete course" });
-          }
+    const [courseRows] = await connection.query(
+      `SELECT id, course_code, course_name, teacher, credits,
+              department_id, semester_id
+       FROM courses
+       WHERE id = ?
+       FOR UPDATE`,
+      [id]
+    );
 
-          if (result.affectedRows === 0) {
-            return res.status(404).json({ error: "Course not found" });
-          }
-
-          writeAuditLog(req, {
-            action: "COURSE_DELETED",
-            entityType: "course",
-            entityId: id,
-            oldValues: oldCourse,
-          });
-
-          res.json({ success: true, message: "Course deleted successfully" });
-        }
-      );
+    if (!courseRows.length) {
+      await connection.rollback();
+      return res.status(404).json({ error: "Course not found" });
     }
-  );
-}
 
+    const [usageRows] = await connection.query(
+      `SELECT 'course_selections' AS table_name, COUNT(*) AS total
+       FROM course_selections WHERE course_id = ?
+       UNION ALL
+       SELECT 'course_selection_request_items', COUNT(*)
+       FROM course_selection_request_items WHERE course_id = ?
+       UNION ALL
+       SELECT 'exam_courses', COUNT(*)
+       FROM exam_courses WHERE course_id = ?
+       UNION ALL
+       SELECT 'students', COUNT(*)
+       FROM students WHERE course_id = ?
+       UNION ALL
+       SELECT 'teacher_courses', COUNT(*)
+       FROM teacher_courses WHERE course_id = ?
+       UNION ALL
+       SELECT 'timetable_entries', COUNT(*)
+       FROM timetable_entries WHERE course_id = ?`,
+      [id, id, id, id, id, id]
+    );
+
+    const references = usageRows.filter(row => Number(row.total) > 0);
+
+    if (references.length) {
+      await connection.rollback();
+
+      return res.status(409).json({
+        error: "This course cannot be deleted because it is linked to existing academic records",
+        references: references.map(row => ({
+          table: row.table_name,
+          count: Number(row.total)
+        }))
+      });
+    }
+
+    const [result] = await connection.query(
+      "DELETE FROM courses WHERE id = ?",
+      [id]
+    );
+
+    if (result.affectedRows !== 1) {
+      throw new Error("Course deletion could not be confirmed");
+    }
+
+    await connection.commit();
+
+    writeAuditLog(req, {
+      action: "COURSE_DELETED",
+      entityType: "course",
+      entityId: id,
+      oldValues: courseRows[0]
+    });
+
+    return res.json({
+      success: true,
+      message: "Course deleted successfully"
+    });
+  } catch (error) {
+    if (connection) {
+      try {
+        await connection.rollback();
+      } catch (rollbackError) {
+        console.error("Course deletion rollback failed:", rollbackError);
+      }
+    }
+
+    if (error.code === "ER_ROW_IS_REFERENCED_2") {
+      return res.status(409).json({
+        error: "This course is linked to existing academic records and cannot be deleted"
+      });
+    }
+
+    console.error("Course deletion failed:", error);
+    return res.status(500).json({ error: "Could not delete course" });
+  } finally {
+    if (connection) connection.release();
+  }
+}
 module.exports = {
   getAllCourses,
   addCourse,

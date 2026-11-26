@@ -72,3 +72,72 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Academic Structure Management */
+.academic-structure-page { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.academic-structure-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.academic-structure-tab { display: flex; align-items: center; gap: 9px; padding: 10px 15px; border: 1px solid var(--border-color, #e5e7eb); border-radius: 9px; background: var(--surface, #fff); color: inherit; cursor: pointer; font: inherit; }
+.academic-structure-tab.active { border-color: var(--primary, #2563eb); background: var(--primary-light, #eff6ff); color: var(--primary, #2563eb); font-weight: 600; }
+.academic-structure-tab span { font-size: 12px; opacity: .7; }
+.academic-structure-toolbar { display: flex; gap: 10px; align-items: center; }
+.academic-structure-toolbar input { flex: 1; min-width: 0; padding: 11px 13px; border: 1px solid var(--border-color, #e5e7eb); border-radius: 8px; background: var(--surface, #fff); color: inherit; font: inherit; }
+.academic-structure-form { padding: 20px; border: 1px solid var(--border-color, #e5e7eb); border-radius: 12px; background: var(--surface, #fff); }
+.academic-structure-form-heading, .academic-structure-form-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.academic-structure-form-heading { margin-bottom: 18px; }
+.academic-structure-form-heading h3 { margin: 0; }
+.academic-structure-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.academic-structure-page .academic-field { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.academic-structure-page .academic-field span { font-size: 13px; font-weight: 600; }
+.academic-structure-page .academic-field input, .academic-structure-page .academic-field select, .academic-structure-page .academic-field textarea { width: 100%; min-width: 0; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--border-color, #d1d5db); border-radius: 8px; background: var(--surface, #fff); color: inherit; font: inherit; }
+.academic-structure-page .academic-field-wide { grid-column: 1 / -1; }
+.academic-checkbox { display: flex; align-items: center; gap: 9px; }
+.academic-structure-form-actions { justify-content: flex-end; margin-top: 20px; }
+.academic-structure-table-wrap { overflow: hidden; }
+.academic-structure-table { width: 100%; border-collapse: collapse; }
+.academic-structure-table th, .academic-structure-table td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--border-color, #e5e7eb); }
+.academic-structure-table th { font-size: 12px; text-transform: capitalize; opacity: .75; }
+.academic-row-actions { display: flex; flex-wrap: wrap; gap: 7px; }
+.academic-deactivate-button { color: #b42318; }
+.academic-structure-empty { padding: 35px 15px; text-align: center; opacity: .7; }
+.academic-structure-footnote { margin: -10px 0 0; font-size: 12px; opacity: .7; }
+@media (max-width: 700px) {
+  .academic-structure-fields { grid-template-columns: 1fr; }
+  .academic-structure-page .academic-field-wide { grid-column: auto; }
+  .academic-structure-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .academic-structure-tab { justify-content: space-between; padding: 10px; }
+  .academic-structure-toolbar { align-items: stretch; }
+  .academic-structure-form { padding: 14px; }
+  .academic-structure-table { min-width: 700px; }
+  .academic-structure-table-wrap { overflow-x: auto; }
+  .academic-structure-form-actions { flex-wrap: wrap; }
+}
+
+/* Timetable publish validation details */
+.module-validation-list {
+  margin: 0 0 14px;
+  padding: 13px 15px;
+  border: 1px solid #f0d8d4;
+  border-radius: 9px;
+  background: #fff8f6;
+  color: #8f514b;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.module-validation-list > strong {
+  display: block;
+  margin-bottom: 7px;
+  color: #a34f48;
+}
+.module-validation-list ul {
+  margin: 0;
+  padding-left: 19px;
+}
+.module-validation-list li {
+  padding: 3px 0;
+}
+.module-validation-list li span {
+  display: inline-block;
+  margin-right: 7px;
+  font-weight: 750;
+  color: #70443f;
+}

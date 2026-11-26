@@ -12,7 +12,9 @@ const attendanceRoutes = require("./src/routes/attendanceRoutes");
 const resultRoutes = require("./src/routes/resultRoutes");
 const feeRoutes = require("./src/routes/feeRoutes");
 const teacherRoutes = require("./src/routes/teacherRoutes");
+const teacherAvailabilityRoutes = require("./src/routes/teacherAvailabilityRoutes");
 const timetableRoutes = require("./src/routes/timetableRoutes");
+const timetableVersionRoutes = require("./src/routes/timetableVersionRoutes");
 const examinationRoutes = require("./src/routes/examinationRoutes");
 const examResultsWorkflowRoutes = require("./src/routes/examResultsWorkflowRoutes");
 const examMarksRoutes = require("./src/routes/examMarksRoutes");
@@ -24,6 +26,7 @@ const departmentRoutes = require("./src/routes/departmentRoutes");
 const semesterRoutes = require("./src/routes/semesterRoutes");
 const academicYearRoutes = require("./src/routes/academicYearRoutes");
 const studentCourseSelectionRoutes = require("./src/routes/studentCourseSelectionRoutes");
+const academicStructureRoutes = require("./src/routes/academicStructureRoutes");
 
 const db = require("./src/config/db");
 
@@ -74,6 +77,8 @@ app.use("/api", attendanceRoutes);
 app.use("/api", resultRoutes);
 app.use("/api", feeRoutes);
 app.use("/api/teachers", teacherRoutes);
+app.use("/api/teacher-availability", teacherAvailabilityRoutes);
+app.use("/api/timetable/versions", timetableVersionRoutes);
 app.use("/api/timetable", timetableRoutes);
 app.use("/api/examinations", examinationRoutes);
 app.use("/api/exam-results", examResultsWorkflowRoutes);
@@ -86,6 +91,7 @@ app.use("/api", departmentRoutes);
 app.use("/api", semesterRoutes);
 app.use("/api", academicYearRoutes);
 app.use("/api", studentCourseSelectionRoutes);
+app.use("/api/academic-structure", academicStructureRoutes);
 
 // Create the leave_requests table automatically if it does not exist yet
 db.query(
@@ -152,20 +158,100 @@ db.query(
   }
 );
 
-// Create daily attendance storage automatically.
+// Create attendance storage for both general attendance and teacher course sessions.
 db.query(
   `CREATE TABLE IF NOT EXISTS attendance_records (
     id INT AUTO_INCREMENT PRIMARY KEY,
     student_id VARCHAR(50) NOT NULL,
+    attendance_session_id INT NULL,
     attendance_date DATE NOT NULL,
     status ENUM('Present', 'Absent', 'Late') NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE KEY unique_student_day (student_id, attendance_date),
-    INDEX idx_attendance_date (attendance_date)
-  )`,
-  (err) => {
-    if (err) console.error("Could not create attendance_records table:", err);
+    INDEX idx_attendance_date (attendance_date),
+    INDEX idx_attendance_student_date (student_id, attendance_date)
+  ) ENGINE=InnoDB`,
+  (recordsErr) => {
+    if (recordsErr) {
+      console.error("Could not create attendance_records table:", recordsErr);
+      return;
+    }
+
+    db.query(
+      `CREATE TABLE IF NOT EXISTS attendance_sessions (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        teacher_course_id INT NOT NULL,
+        attendance_date DATE NOT NULL,
+        status ENUM('Scheduled', 'Completed') NOT NULL DEFAULT 'Scheduled',
+        created_by INT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY unique_teacher_course_date (teacher_course_id, attendance_date),
+        INDEX idx_attendance_session_date (attendance_date)
+      ) ENGINE=InnoDB`,
+      (sessionsErr) => {
+        if (sessionsErr) {
+          console.error("Could not create attendance_sessions table:", sessionsErr);
+          return;
+        }
+
+        // Migrate existing databases without deleting prior attendance.
+        db.query("SHOW COLUMNS FROM attendance_records LIKE 'attendance_session_id'", (columnErr, columns) => {
+          if (columnErr) {
+            console.error("Could not inspect attendance_records columns:", columnErr);
+            return;
+          }
+
+          const ensureSessionColumn = (next) => {
+            if (columns.length) return next();
+            db.query(
+              "ALTER TABLE attendance_records ADD COLUMN attendance_session_id INT NULL AFTER student_id",
+              (alterErr) => {
+                if (alterErr) {
+                  console.error("Could not add attendance session column:", alterErr);
+                  return;
+                }
+                next();
+              }
+            );
+          };
+
+          ensureSessionColumn(() => {
+            db.query("SHOW INDEX FROM attendance_records WHERE Key_name = 'unique_student_day'", (indexErr, indexes) => {
+              if (indexErr) {
+                console.error("Could not inspect attendance indexes:", indexErr);
+                return;
+              }
+
+              const ensureCourseSessionIndex = () => {
+                db.query("SHOW INDEX FROM attendance_records WHERE Key_name = 'unique_student_session'", (newIndexErr, newIndexes) => {
+                  if (newIndexErr) {
+                    console.error("Could not inspect course attendance index:", newIndexErr);
+                    return;
+                  }
+                  if (newIndexes.length) return;
+                  db.query(
+                    "ALTER TABLE attendance_records ADD UNIQUE KEY unique_student_session (attendance_session_id, student_id)",
+                    (addIndexErr) => {
+                      if (addIndexErr) console.error("Could not add course attendance index:", addIndexErr);
+                      else console.log("Attendance storage is ready.");
+                    }
+                  );
+                });
+              };
+
+              if (!indexes.length) return ensureCourseSessionIndex();
+              db.query("ALTER TABLE attendance_records DROP INDEX unique_student_day", (dropErr) => {
+                if (dropErr) {
+                  console.error("Could not migrate daily attendance index:", dropErr);
+                  return;
+                }
+                ensureCourseSessionIndex();
+              });
+            });
+          });
+        });
+      }
+    );
   }
 );
 
@@ -343,6 +429,44 @@ app.use((err, req, res, next) => {
   return res.status(500).json({ error: "Internal server error" });
 });
 
+
+// Teacher profile data and administrator approval workflow.
+db.query(
+  `CREATE TABLE IF NOT EXISTS teacher_profiles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    teacher_id INT NOT NULL UNIQUE,
+    profile_data JSON NOT NULL,
+    updated_by INT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_teacher_profile_updated (updated_at)
+  ) ENGINE=InnoDB`,
+  (err) => {
+    if (err) console.error("Could not create teacher_profiles table:", err);
+    else console.log("Teacher profiles table is ready.");
+  }
+);
+
+db.query(
+  `CREATE TABLE IF NOT EXISTS teacher_profile_requests (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    teacher_id INT NOT NULL,
+    submitted_data JSON NOT NULL,
+    status ENUM('Pending','Approved','Rejected') NOT NULL DEFAULT 'Pending',
+    admin_note VARCHAR(1000) NULL,
+    reviewed_by INT NULL,
+    reviewed_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_teacher_profile_request_status (status, created_at),
+    INDEX idx_teacher_profile_request_teacher (teacher_id, status)
+  ) ENGINE=InnoDB`,
+  (err) => {
+    if (err) console.error("Could not create teacher_profile_requests table:", err);
+    else console.log("Teacher profile requests table is ready.");
+  }
+);
+
 app.listen(process.env.PORT || 5000, () => {
   console.log(`Server running on port ${process.env.PORT || 5000}`);
 });
+
+

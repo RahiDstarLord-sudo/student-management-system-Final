@@ -1,0 +1,122 @@
+/* High-contrast teacher portal overrides. Loaded after TeacherPortal.css. */
+.teacher-portal {
+  --teacher-text: #172033;
+  --teacher-muted: #526078;
+  --teacher-border: #d5deea;
+  --teacher-surface: #ffffff;
+  --teacher-page: #f3f6fb;
+  color: var(--teacher-text) !important;
+  background: var(--teacher-page) !important;
+  color-scheme: light;
+}
+.teacher-portal * { box-sizing: border-box; }
+.teacher-portal :is(p, span, strong, small, label, h1, h2, h3, th, td, li, div) {
+  text-shadow: none !important;
+}
+.teacher-portal :is(.teacher-portal-main, .teacher-welcome, .teacher-panel,
+  .teacher-stat-grid article, .teacher-course-item, .teacher-timetable-item,
+  .teacher-day-group, .teacher-attendance-summary, .teacher-attendance-table-wrap) {
+  color: var(--teacher-text) !important;
+}
+.teacher-portal-main { background: var(--teacher-page) !important; }
+.teacher-portal :is(.teacher-panel, .teacher-stat-grid article) {
+  background: var(--teacher-surface) !important;
+  border-color: var(--teacher-border) !important;
+}
+.teacher-portal :is(.teacher-welcome h1, .teacher-panel h2, .teacher-day-group h3,
+  .teacher-course-item strong, .teacher-timetable-item strong,
+  .teacher-attendance-table strong, .teacher-stat-grid strong) {
+  color: #172033 !important;
+}
+.teacher-portal :is(.teacher-welcome p, .teacher-panel p, .teacher-stat-grid article span,
+  .teacher-course-item span, .teacher-timetable-item span, .teacher-time,
+  .teacher-attendance-actions span, .teacher-attendance-table small) {
+  color: #526078 !important;
+}
+.teacher-portal-header {
+  background: #14243b !important;
+  color: #ffffff !important;
+  border-color: #263b57 !important;
+}
+.teacher-portal-header :is(strong, span, div) { color: #ffffff !important; }
+.teacher-portal-header button {
+  color: #ffffff !important;
+  background: #263b57 !important;
+  border: 1px solid #64748b !important;
+}
+.teacher-workspace-nav {
+  background: #ffffff !important;
+  border-color: var(--teacher-border) !important;
+}
+.teacher-workspace-nav a {
+  color: #26364e !important;
+  text-decoration-color: currentColor;
+}
+.teacher-workspace-nav a:hover,
+.teacher-workspace-nav a:focus-visible {
+  color: #0759b8 !important;
+  background: #eaf3ff !important;
+}
+.teacher-portal :is(input, select, textarea) {
+  color: #172033 !important;
+  background: #ffffff !important;
+  border: 1px solid #aebbd0 !important;
+  caret-color: #172033 !important;
+}
+.teacher-portal select option {
+  color: #172033 !important;
+  background: #ffffff !important;
+}
+.teacher-portal :is(input, select, textarea)::placeholder { color: #68778e !important; opacity: 1; }
+.teacher-portal :is(input, select, textarea):focus-visible {
+  outline: 3px solid #93c5fd !important;
+  outline-offset: 1px;
+  border-color: #2563eb !important;
+}
+.teacher-portal .teacher-attendance-table {
+  color: #172033 !important;
+  background: #ffffff !important;
+  border-color: var(--teacher-border) !important;
+}
+.teacher-portal .teacher-attendance-table thead,
+.teacher-portal .teacher-attendance-table th {
+  color: #26364e !important;
+  background: #eaf0f8 !important;
+}
+.teacher-portal .teacher-attendance-table td {
+  color: #172033 !important;
+  background: #ffffff !important;
+  border-color: #e0e6ef !important;
+}
+.teacher-portal .teacher-attendance-table tbody tr:nth-child(even) td {
+  background: #f8fafc !important;
+}
+.teacher-portal :is(.teacher-refresh, .teacher-attendance-actions button) {
+  color: #ffffff !important;
+  background: #1458a6 !important;
+  border: 1px solid #1458a6 !important;
+}
+.teacher-portal :is(.teacher-refresh, .teacher-attendance-actions button):hover:not(:disabled) {
+  background: #0d437f !important;
+}
+.teacher-portal :is(.teacher-refresh, .teacher-attendance-actions button):disabled {
+  color: #e5e7eb !important;
+  background: #64748b !important;
+  cursor: not-allowed;
+}
+.teacher-portal .teacher-alert-error {
+  color: #991b1b !important;
+  background: #fef2f2 !important;
+  border-color: #fecaca !important;
+}
+.teacher-portal .teacher-alert-success {
+  color: #166534 !important;
+  background: #f0fdf4 !important;
+  border-color: #bbf7d0 !important;
+}
+.teacher-portal .teacher-empty { color: #526078 !important; }
+.teacher-portal-footer { color: #526078 !important; }
+@media (max-width: 700px) {
+  .teacher-portal-header, .teacher-workspace-nav { color: #ffffff !important; }
+  .teacher-workspace-nav a { color: #26364e !important; }
+}

@@ -1,18 +1,22 @@
 
 import React, { useEffect, useMemo, useState } from "react";
+import { API_BASE } from "./services/apiConfig";
 import "./App.css";
 import StudentPortal from "./StudentPortal";
-import RegistrationManagementPage from "./RegistrationManagementPage";
 import { ExaminationsPage, TimetablePage, MessagesPage, SettingsPage } from "./AdminModules";
 import CourseRequestsPage from "./CourseRequestsPage";
 import TeacherPortal from "./TeacherPortal";
 import StudentRegistrationPage from "./StudentRegistrationPage";
+import RegistrationManagementPage from "./RegistrationManagementPage";
+import TeacherCourseAssignmentsPage from "./TeacherCourseAssignmentsPage";
+import AcademicStructurePage from "./AcademicStructurePage";
+import TeacherProfileApprovalsPage from "./TeacherProfileApprovalsPage";
+import TeacherAvailabilityPage from "./TeacherAvailabilityPage";
 
 /* =========================================================
    01. API CONFIGURATION & AUTHENTICATION
 ========================================================= */
 
-const API_BASE = "http://localhost:5000/api";
 const API_URL = `${API_BASE}/students`;
 const LEAVES_API = `${API_BASE}/leaves`;
 
@@ -30,50 +34,71 @@ function authHeaders(extra = {}) {
 ========================================================= */
 
 const navigation = [
-  {
-    heading: "OVERVIEW",
-    items: [{ label: "Dashboard", icon: "▦" }],
-  },
+  { heading: "OVERVIEW", items: [{ label: "Dashboard", icon: "DB" }] },
   {
     heading: "ACADEMIC",
     items: [
-      { label: "Students", icon: "♙" },
-      { label: "Student Registrations", icon: "♖" },
-      { label: "Course Requests", icon: "▤" },
-      { label: "Teachers", icon: "♧" },
-      { label: "Courses", icon: "▤" },
-      { label: "Attendance", icon: "◷" },
-      { label: "Examinations", icon: "▣" },
-      { label: "Results", icon: "▥" },
-      { label: "Timetable", icon: "▦" },
+      { label: "Students", icon: "ST" },
+      { label: "Registration & IDs", icon: "ID" },
+      { label: "Course Requests", icon: "CR" },
+      { label: "Teachers", icon: "TC" },
+      { label: "Teacher Course Assignments", icon: "TC" },
+      { label: "Teacher Availability", icon: "AT" },
+      { label: "Academic Structure", icon: "CO" },
+      { label: "Teacher Profile Approvals", icon: "PA" },
+      { label: "Courses", icon: "CO" },
+      { label: "Attendance", icon: "AT" },
+      { label: "Examinations", icon: "EX" },
+      { label: "Results", icon: "RS" },
+      { label: "Timetable", icon: "TT" },
     ],
   },
   {
     heading: "ADMINISTRATION",
     items: [
-      { label: "Fees & Payments", icon: "৳" },
-      { label: "Leave Requests", icon: "✎" },
-      { label: "Messages", icon: "✉" },
-      { label: "Settings", icon: "⚙" },
+      { label: "Fees & Payments", icon: "FE" },
+      { label: "Leave Requests", icon: "LV" },
+      { label: "Messages", icon: "MS" },
+      { label: "Settings", icon: "SE" },
     ],
   },
 ];
 
-const monthData = [
-  { month: "Jan", value: 42 },
-  { month: "Feb", value: 48 },
-  { month: "Mar", value: 45 },
-  { month: "Apr", value: 58 },
-  { month: "May", value: 54 },
-  { month: "Jun", value: 68 },
-  { month: "Jul", value: 63 },
-  { month: "Aug", value: 74 },
-  { month: "Sep", value: 70 },
-  { month: "Oct", value: 82 },
-  { month: "Nov", value: 78 },
-  { month: "Dec", value: 92 },
-];
+const navIconPaths = {
+  DB: <><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></>,
+  ST: <><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="10" cy="7" r="4" /><path d="M20 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></>,
+  ID: <><rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="8.5" cy="11" r="2" /><path d="M5.5 16a3 3 0 0 1 6 0M14 10h4M14 14h4" /></>,
+  CR: <><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 4.5h6M9 10h6M9 14h6M9 18h3" /></>,
+  TC: <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></>,
+  PA: <><circle cx="9" cy="8" r="4" /><path d="M2 21a7 7 0 0 1 12-4.9M16 19l2 2 4-5" /></>,
+  CO: <><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21z" /><path d="M4 5.5v13M8 7h8M8 11h8" /></>,
+  AT: <><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M16 2v4M8 2v4M3 9h18M8 14l2 2 5-5" /></>,
+  EX: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6M8 13h8M8 17h8" /></>,
+  RS: <><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></>,
+  TT: <><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M16 2v4M8 2v4M3 9h18M8 13h2M14 13h2M8 17h2" /></>,
+  FE: <><rect x="3" y="6" width="18" height="15" rx="2" /><path d="M3 10h18M16 15h2M7 6V4a2 2 0 0 1 2-2h9" /></>,
+  LV: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2M16.5 3.5l2 2" /></>,
+  MS: <><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8A8.5 8.5 0 0 1 8.7 3.9a8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8z" /></>,
+  SE: <><circle cx="12" cy="12" r="3" /><path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.7a8 8 0 0 1-2 .9l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-2-.9l-1.7.7-1.4-2.4 1.4-1.1a8 8 0 0 1 0-2l-1.4-1.1 1.4-2.4 1.7.7a8 8 0 0 1 2-.9l.3-1.8h2.8l.3 1.8a8 8 0 0 1 2 .9l1.7-.7 1.4 2.4-1.4 1.1a8 8 0 0 1 0 2z" /></>
+};
 
+function NavIcon({ name }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="19"
+      height="19"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {navIconPaths[name] || <circle cx="12" cy="12" r="8" />}
+    </svg>
+  );
+}
 /* =========================================================
    REUSABLE SUCCESS TOAST
 ========================================================= */
@@ -134,8 +159,13 @@ function App() {
 
   // Student data
   const [students, setStudents] = useState([]);
+  const [studentDepartments, setStudentDepartments] = useState([]);
+  const [studentCourses, setStudentCourses] = useState([]);
+  const [dashboardMetrics, setDashboardMetrics] = useState({ teachers: null, courses: null, attendance: null });
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [currentStudentPage, setCurrentStudentPage] = useState(1);
+  const studentPageSize = 10;
 
   // Student forms and modals
   const [showModal, setShowModal] = useState(false);
@@ -185,6 +215,59 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
+  useEffect(() => {
+    if (!user || user.role === "student" || user.role === "teacher") return;
+
+    Promise.all([
+      fetch(`${API_BASE}/departments`, { headers: authHeaders() }),
+      fetch(`${API_BASE}/courses`, { headers: authHeaders() }),
+    ])
+      .then(async ([departmentResponse, courseResponse]) => {
+        const [departmentData, courseData] = await Promise.all([
+          departmentResponse.json(),
+          courseResponse.json(),
+        ]);
+        if (!departmentResponse.ok) throw new Error(departmentData.error || "Could not load departments");
+        if (!courseResponse.ok) throw new Error(courseData.error || "Could not load courses");
+        setStudentDepartments(Array.isArray(departmentData) ? departmentData.filter((item) => item.status === "Active") : []);
+        setStudentCourses(Array.isArray(courseData) ? courseData : []);
+      })
+      .catch((error) => console.error("Failed to load student assignment options:", error));
+  }, [user]);
+
+  useEffect(() => {
+    if (!user || user.role === "student" || user.role === "teacher") return;
+
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    const load = async (path) => {
+      const response = await fetch(`${API_BASE}${path}`, { headers: authHeaders() });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Could not load dashboard data");
+      return data;
+    };
+
+    Promise.allSettled([
+      load("/teachers"),
+      load("/courses"),
+      load(`/attendance?date=${today}`),
+    ]).then(([teacherResult, courseResult, attendanceResult]) => {
+      const teacherRows = teacherResult.status === "fulfilled" && Array.isArray(teacherResult.value) ? teacherResult.value : null;
+      const courseRows = courseResult.status === "fulfilled" && Array.isArray(courseResult.value) ? courseResult.value : null;
+      let attendance = null;
+      if (attendanceResult.status === "fulfilled" && Array.isArray(attendanceResult.value)) {
+        const rows = attendanceResult.value;
+        const marked = rows.filter((row) => ["Present", "Absent", "Late"].includes(row.status));
+        attendance = marked.length ? Math.round((marked.filter((row) => row.status === "Present" || row.status === "Late").length / marked.length) * 1000) / 10 : null;
+      }
+      setDashboardMetrics({
+        teachers: teacherRows ? teacherRows.length : null,
+        courses: courseRows ? courseRows.length : null,
+        attendance,
+      });
+    });
+  }, [user]);
+
   /* -------------------- AUTHENTICATION -------------------- */
 
   function handleLogin(data) {
@@ -227,6 +310,16 @@ function App() {
       return matchesSearch && matchesStatus;
     });
   }, [students, search, statusFilter]);
+
+  useEffect(() => {
+    setCurrentStudentPage(1);
+  }, [search, statusFilter]);
+
+  const studentTotalPages = Math.max(1, Math.ceil(filteredStudents.length / studentPageSize));
+  const paginatedStudents = filteredStudents.slice(
+    (currentStudentPage - 1) * studentPageSize,
+    currentStudentPage * studentPageSize
+  );
 
   /* -------------------- DATE -------------------- */
 
@@ -295,7 +388,8 @@ function App() {
       }
 
       if (!response.ok) {
-        throw new Error("Failed to update student");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to update student");
       }
 
       const updated = await response.json();
@@ -309,7 +403,7 @@ function App() {
       setEditingStudent(null);
     } catch (error) {
       console.error(error);
-      alert("Could not update the student.");
+      alert(error.message || "Could not update the student.");
     }
   }
 
@@ -428,7 +522,7 @@ if (user.role === "teacher") {
 
           <div>
             <h2>Greenfield</h2>
-            <span>COLLEGE PORTAL</span>
+            <span>UNIVERSITY PORTAL</span>
           </div>
 
           <button
@@ -444,8 +538,8 @@ if (user.role === "teacher") {
           <div className="institution-symbol">G</div>
 
           <div>
-            <strong>Greenfield College</strong>
-            <span>Dhaka Campus</span>
+            <strong>Greenfield University</strong>
+            <span>University Portal</span>
           </div>
 
           <span className="institution-arrow">⌄</span>
@@ -464,12 +558,10 @@ if (user.role === "teacher") {
                   }`}
                   onClick={() => selectPage(item.label)}
                 >
-                  <span className="nav-symbol">{item.icon}</span>
+                  <span className="nav-symbol"><NavIcon name={item.icon} /></span>
                   <span>{item.label}</span>
 
-                  {item.label === "Messages" && (
-                    <span className="message-count">3</span>
-                  )}
+
                 </button>
               ))}
             </div>
@@ -490,11 +582,11 @@ if (user.role === "teacher") {
           </div>
 
           <div className="admin-profile">
-            <div className="admin-avatar">JD</div>
+            <div className="admin-avatar">{(user.name || user.full_name || user.email || "AD").split(/[\s@._-]+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase()}</div>
 
             <div className="admin-details">
-              <strong>James Davidson</strong>
-              <span>Administrator</span>
+              <strong>{user.name || user.full_name || user.email || "Administrator"}</strong>
+              <span>"Administrator"</span>
             </div>
 
             <span className="profile-dots">•••</span>
@@ -515,10 +607,10 @@ if (user.role === "teacher") {
               onClick={() => setMobileMenu(true)}
               aria-label="Open menu"
             >
-              ☰
+              {"\u2630"}
             </button>
 
-            <div className="breadcrumb"></div>
+            <div className="breadcrumb"><span>Workspace</span><b>/</b><strong>{activePage}</strong></div>
           </div>
 
           <div className="topbar-right">
@@ -526,7 +618,7 @@ if (user.role === "teacher") {
             {/* Global Search */}
 
             <div className="top-search">
-              <span>⌕</span>
+              <span>{"\u2315"}</span>
 
               <input
                 placeholder="Search students, courses..."
@@ -541,7 +633,7 @@ if (user.role === "teacher") {
                 }}
               />
 
-              <kbd>⌘ K</kbd>
+              <kbd>Ctrl K</kbd>
             </div>
 
             {/* Notifications */}
@@ -555,27 +647,15 @@ if (user.role === "teacher") {
                   setProfileOpen(false);
                 }}
               >
-                ♧<i />
+                {"\u25C9"}<i />
               </button>
 
               {notificationsOpen && (
                 <div className="dropdown">
                   <strong>Notifications</strong>
-                  <p>Recent college updates</p>
-
+                  <p>System notifications</p>
                   <div className="dropdown-row">
-                    <span className="notification-dot" />
-                    <span>New student registration received.</span>
-                  </div>
-
-                  <div className="dropdown-row">
-                    <span className="notification-dot amber" />
-                    <span>Monthly attendance report is ready.</span>
-                  </div>
-
-                  <div className="dropdown-row">
-                    <span className="notification-dot green-dot" />
-                    <span>Fee payment update received.</span>
+                    <span>No notification feed is connected yet.</span>
                   </div>
                 </div>
               )}
@@ -591,15 +671,15 @@ if (user.role === "teacher") {
                   setNotificationsOpen(false);
                 }}
               >
-                <div className="admin-avatar small">JD</div>
-                <span>James Davidson</span>
-                <b>⌄</b>
+                <div className="admin-avatar small">{(user.name || user.full_name || user.email || "AD").split(/[\s@._-]+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase()}</div>
+                <span>{user.name || user.full_name || user.email || "Administrator"}</span>
+                <b>{"\u2304"}</b>
               </button>
 
               {profileOpen && (
                 <div className="dropdown profile-dropdown">
-                  <strong>James Davidson</strong>
-                  <p>College Administrator</p>
+                  <strong>{user.name || user.full_name || user.email || "Administrator"}</strong>
+                  <p>"Administrator"</p>
 
                   <button
                     onClick={() => {
@@ -627,20 +707,20 @@ if (user.role === "teacher") {
 
           {/* Page Heading */}
 
-          <section className="page-heading">
+          <section className={`page-heading ${activePage === "Dashboard" ? "dashboard-page-heading" : ""}`}>
             <div>
               <p className="eyebrow">{date}</p>
 
               <h1>
                 {activePage === "Dashboard"
-                  ? "Good morning, James"
+                  ? `Welcome, ${(user.name || user.full_name || user.email || "Administrator").split(/[\s@]/)[0]}`
                   : activePage}
               </h1>
 
               <p className="page-description">
                 {activePage === "Dashboard"
-                  ? "Here is an overview of what's happening at your college."
-                  : `Manage and review your college ${activePage.toLowerCase()} information.`}
+                  ? "Here is an overview of your university management workspace."
+                  : `Manage and review university ${activePage.toLowerCase()} information.`}
               </p>
             </div>
 
@@ -652,14 +732,7 @@ if (user.role === "teacher") {
                 <span>↓</span> Export
               </button>
 
-              {activePage === "Students" && (
-                <button
-                  className="button button-primary"
-                  onClick={() => setShowModal(true)}
-                >
-                  + Add student
-                </button>
-              )}
+
             </div>
           </section>
 
@@ -675,147 +748,65 @@ if (user.role === "teacher") {
               <section className="metric-grid">
                 <Metric
                   label="Total students"
-                  value="2,845"
-                  change="+8.4%"
-                  detail="Compared with last term"
-                  icon="♙"
+                  value={students.length.toLocaleString("en-US")}
+                  change="Live records"
+                  detail="Loaded from the student directory"
+                  icon="ST"
                 />
 
                 <Metric
                   label="Teaching staff"
-                  value="148"
-                  change="+3.2%"
-                  detail="Compared with last term"
-                  icon="♧"
+                  value={dashboardMetrics.teachers === null ? "—" : dashboardMetrics.teachers.toLocaleString("en-US")}
+                  change={dashboardMetrics.teachers === null ? "Unavailable" : "Live records"}
+                  detail={dashboardMetrics.teachers === null ? "Teacher summary could not be loaded" : "Loaded from teacher records"}
+                  icon="TC"
                 />
 
                 <Metric
-                  label="Active courses"
-                  value="36"
-                  change="+2"
-                  detail="New courses this year"
-                  icon="▤"
+                  label="Courses"
+                  value={dashboardMetrics.courses === null ? "—" : dashboardMetrics.courses.toLocaleString("en-US")}
+                  change={dashboardMetrics.courses === null ? "Unavailable" : "Live records"}
+                  detail={dashboardMetrics.courses === null ? "Course summary could not be loaded" : "Loaded from course records"}
+                  icon="CO"
                 />
 
                 <Metric
                   label="Today's attendance"
-                  value="94.6%"
-                  change="+1.8%"
-                  detail="Compared with yesterday"
-                  icon="◷"
+                  value={dashboardMetrics.attendance === null ? "—" : `${dashboardMetrics.attendance}%`}
+                  change={dashboardMetrics.attendance === null ? "No data" : "Live records"}
+                  detail={dashboardMetrics.attendance === null ? "No marked attendance records are available" : "Present and late records for today"}
+                  icon="AT"
                 />
               </section>
 
-              {/* Dashboard Charts */}
+              {/* Academic insights */}
 
               <section className="overview-grid">
-
-                {/* Student Enrolment */}
-
                 <article className="surface enrollment-card">
                   <div className="section-heading">
                     <div>
-                      <h2>Student enrolment</h2>
-                      <p>Admission activity throughout the year</p>
-                    </div>
-
-                    <select defaultValue="2026" aria-label="Select year">
-                      <option value="2026">2026</option>
-                      <option value="2025">2025</option>
-                    </select>
-                  </div>
-
-                  <div className="chart-summary">
-                    <strong>2,845</strong>
-                    <span>Total enrolled students</span>
-                  </div>
-
-                  <div className="bar-chart">
-                    <div className="chart-axis">
-                      <span>3,000</span>
-                      <span>2,250</span>
-                      <span>1,500</span>
-                      <span>750</span>
-                      <span>0</span>
-                    </div>
-
-                    <div className="chart-area">
-                      <div className="chart-guides">
-                        <i />
-                        <i />
-                        <i />
-                        <i />
-                        <i />
-                      </div>
-
-                      <div className="chart-bars">
-                        {monthData.map((item, index) => (
-                          <div className="chart-item" key={item.month}>
-                            <div
-                              className={`chart-column ${
-                                index === 10 ? "current-month" : ""
-                              }`}
-                              style={{ height: `${item.value}%` }}
-                              title={`${item.month}: ${item.value}%`}
-                            />
-                          </div>
-                        ))}
-                      </div>
+                      <h2>Academic overview</h2>
+                      <p>Verified information available from connected modules</p>
                     </div>
                   </div>
-
-                  <div className="chart-labels">
-                    {monthData.map((item) => (
-                      <span key={item.month}>{item.month}</span>
-                    ))}
+                  <div className="dashboard-empty-state">
+                    <strong>{students.length.toLocaleString("en-US")}</strong>
+                    <span>Student records currently available</span>
+                    <p>Additional enrolment trends will appear when historical reporting data is connected.</p>
                   </div>
                 </article>
-
-                {/* Attendance Summary */}
-
                 <article className="surface attendance-card">
                   <div className="section-heading">
                     <div>
                       <h2>Attendance summary</h2>
-                      <p>Today's student attendance</p>
-                    </div>
-
-                    <button className="plain-menu">•••</button>
-                  </div>
-
-                  <div className="attendance-visual">
-                    <div className="attendance-ring">
-                      <div className="ring-center">
-                        <strong>94.6%</strong>
-                        <span>Present</span>
-                      </div>
+                      <p>Today's attendance based on marked records</p>
                     </div>
                   </div>
-
-                  <div className="attendance-details">
-                    <div>
-                      <span>
-                        <i className="dot present-dot" />
-                        Present
-                      </span>
-                      <strong>2,690</strong>
-                    </div>
-
-                    <div>
-                      <span>
-                        <i className="dot absent-dot" />
-                        Absent
-                      </span>
-                      <strong>115</strong>
-                    </div>
-
-                    <div>
-                      <span>
-                        <i className="dot late-dot" />
-                        Late
-                      </span>
-                      <strong>40</strong>
-                    </div>
+                  <div className="dashboard-empty-state">
+                    <strong>{dashboardMetrics.attendance === null ? "No data" : `${dashboardMetrics.attendance}%`}</strong>
+                    <span>{dashboardMetrics.attendance === null ? "No marked attendance records are available for today." : "Present and late attendance across today's marked records."}</span>
+                    <p>Open Attendance to review or update the underlying records.</p>
+                    <button className="button button-outline" onClick={() => selectPage("Attendance")}>Open attendance</button>
                   </div>
                 </article>
               </section>
@@ -825,8 +816,8 @@ if (user.role === "teacher") {
               <section className="surface recent-section">
                 <div className="section-heading recent-heading">
                   <div>
-                    <h2>Recently registered students</h2>
-                    <p>Latest student records added to the system</p>
+                    <h2>Student directory preview</h2>
+                    <p>A quick look at records returned by the student directory</p>
                   </div>
 
                   <button
@@ -859,15 +850,7 @@ if (user.role === "teacher") {
                   </div>
 
                   <div className="quick-links">
-                    <button onClick={() => selectPage("Student Registrations")}>
-                      <span>＋</span>
-                      <div>
-                        <strong>Student Registrations</strong>
-                        <small>Review and approve applications</small>
-                      </div>
-
-                      <b>→</b>
-                    </button>
+                    
 
                     <button onClick={() => selectPage("Attendance")}>
                       <span>◷</span>
@@ -896,23 +879,19 @@ if (user.role === "teacher") {
                 {/* Academic Session */}
 
                 <article className="surface session-card">
-                  <p>ACADEMIC SESSION</p>
-                  <h2>2026 – 2027</h2>
-
+                  <p>ACADEMIC CONFIGURATION</p>
+                  <h2>Greenfield University</h2>
                   <span className="session-status">
-                    <i /> Current session
+                    <i /> Management workspace
                   </span>
-
                   <div className="session-divider" />
-
                   <div className="session-meta">
-                    <span>Campus</span>
-                    <strong>Dhaka</strong>
+                    <span>Academic session</span>
+                    <strong>Managed in Settings</strong>
                   </div>
-
                   <div className="session-meta">
-                    <span>Institution</span>
-                    <strong>Greenfield College</strong>
+                    <span>Reporting</span>
+                    <strong>Live module data only</strong>
                   </div>
                 </article>
               </section>
@@ -922,23 +901,56 @@ if (user.role === "teacher") {
              STUDENTS PAGE
           ================================================= */
 
+          ) : activePage === "Registration & IDs" ? (
+            <RegistrationManagementPage />
+
           ) : activePage === "Students" ? (
-            <section className="surface student-management">
-              <div className="section-heading student-management-heading">
-                <div>
+            <section className="student-management-page">
+              <div className="student-directory-intro">
+                <div className="student-directory-copy">
+                  <span className="student-directory-kicker">ACADEMIC RECORDS</span>
                   <h2>Student directory</h2>
-                  <p>Search and manage registered student records</p>
+                  <p>Review student profiles, track enrollment status, and manage academic records from one place.</p>
+                </div>
+                <div className="student-directory-total">
+                  <span>Total records</span>
+                  <strong>{students.length}</strong>
+                  <small>Student profiles</small>
                 </div>
               </div>
 
+              <div className="student-directory-stats">
+                <article className="student-directory-stat">
+                  <span className="directory-stat-icon directory-stat-all">▦</span>
+                  <div><small>All students</small><strong>{students.length}</strong></div>
+                </article>
+                <article className="student-directory-stat">
+                  <span className="directory-stat-icon directory-stat-active">✓</span>
+                  <div><small>Active students</small><strong>{students.filter((student) => String(student.status || "").toLowerCase() === "active").length}</strong></div>
+                </article>
+                <article className="student-directory-stat">
+                  <span className="directory-stat-icon directory-stat-pending">◷</span>
+                  <div><small>Pending students</small><strong>{students.filter((student) => String(student.status || "").toLowerCase() === "pending").length}</strong></div>
+                </article>
+              </div>
+
+              <section className="surface student-management">
+                <div className="section-heading student-management-heading">
+                  <div>
+                    <h2>All student records</h2>
+                    <p>Search, filter, and update student information</p>
+                  </div>
+                  <span className="directory-live-label"><i /> Live records</span>
+                </div>
+
               <div className="student-filters">
                 <div className="filter-search">
-                  <span>⌕</span>
+                  <span>{"\u2315"}</span>
 
                   <input
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
-                    placeholder="Search by name, ID or course"
+                    placeholder="Search by name, ID, email or course"
                   />
                 </div>
 
@@ -948,28 +960,32 @@ if (user.role === "teacher") {
                 >
                   <option>All</option>
                   <option>Active</option>
-                  <option>Pending</option>
                   <option>Inactive</option>
                 </select>
               </div>
 
               <StudentTable
-                students={filteredStudents}
+                students={paginatedStudents}
                 onDelete={deleteStudent}
                 onEdit={setEditingStudent}
               />
 
-              <p className="table-count">
-                Showing {filteredStudents.length} of {students.length} records
-              </p>
+              <div className="student-pagination">
+                <p className="table-count">
+                  Showing {filteredStudents.length ? (currentStudentPage - 1) * studentPageSize + 1 : 0}–{Math.min(currentStudentPage * studentPageSize, filteredStudents.length)} of {filteredStudents.length} matching records
+                </p>
+                <div className="student-pagination-actions">
+                  <button type="button" className="button button-outline" onClick={() => setCurrentStudentPage((page) => Math.max(1, page - 1))} disabled={currentStudentPage === 1}>Previous</button>
+                  <span>Page {currentStudentPage} of {studentTotalPages}</span>
+                  <button type="button" className="button button-outline" onClick={() => setCurrentStudentPage((page) => Math.min(studentTotalPages, page + 1))} disabled={currentStudentPage >= studentTotalPages}>Next</button>
+                </div>
+              </div>
+              </section>
             </section>
 
           /* =================================================
              OTHER MANAGEMENT PAGES
           ================================================= */
-
-          ) : activePage === "Student Registrations" ? (
-            <RegistrationManagementPage />
 
           ) : activePage === "Course Requests" ? (
             <CourseRequestsPage />
@@ -979,6 +995,15 @@ if (user.role === "teacher") {
 
           ) : activePage === "Teachers" ? (
             <TeacherManagementPage />
+
+           ) : activePage === "Teacher Course Assignments" ? (
+            <TeacherCourseAssignmentsPage />
+          ) : activePage === "Teacher Availability" ? (
+            <TeacherAvailabilityPage />
+          ) : activePage === "Academic Structure" ? (
+            <AcademicStructurePage />
+          ) : activePage === "Teacher Profile Approvals" ? (
+            <TeacherProfileApprovalsPage />
 
           ) : activePage === "Courses" ? (
             <CourseManagementPage />
@@ -1006,7 +1031,7 @@ if (user.role === "teacher") {
 
           ) : (
             <section className="surface coming-soon">
-              <div className="coming-icon">▤</div>
+              <div className="coming-icon">▦</div>
               <h2>{activePage}</h2>
 
               <p>
@@ -1026,7 +1051,7 @@ if (user.role === "teacher") {
           {/* ================= FOOTER ================= */}
 
           <footer className="footer">
-            <span>© 2026 Greenfield College · Administration Portal</span>
+            <span>© 2026 Greenfield University · Administration Portal</span>
             <span>Academic year 2026–2027</span>
           </footer>
         </div>
@@ -1091,17 +1116,54 @@ if (user.role === "teacher") {
               </label>
 
               <label>
-                Course
-                <input
+                Department
+                <select
                   required
-                  value={editingStudent.course}
+                  value={editingStudent.departmentId || ""}
                   onChange={(event) =>
                     setEditingStudent({
                       ...editingStudent,
-                      course: event.target.value,
+                      departmentId: event.target.value,
+                      courseId: "",
+                      course: "",
                     })
                   }
-                />
+                >
+                  <option value="">Select department</option>
+                  {studentDepartments.map((department) => (
+                    <option key={department.id} value={department.id}>
+                      {department.department_name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Course
+                <select
+                  required
+                  value={editingStudent.courseId || ""}
+                  disabled={!editingStudent.departmentId}
+                  onChange={(event) => {
+                    const selectedCourse = studentCourses.find(
+                      (course) => String(course.id) === event.target.value
+                    );
+                    setEditingStudent({
+                      ...editingStudent,
+                      courseId: event.target.value,
+                      course: selectedCourse ? selectedCourse.course_name : "",
+                    });
+                  }}
+                >
+                  <option value="">Select course</option>
+                  {studentCourses
+                    .filter((course) => String(course.department_id) === String(editingStudent.departmentId))
+                    .map((course) => (
+                      <option key={course.id} value={course.id}>
+                        {course.course_code} - {course.course_name}
+                      </option>
+                    ))}
+                </select>
               </label>
 
               <label>
@@ -2735,7 +2797,7 @@ function Metric({ label, value, change, detail, icon }) {
     <article className="metric-card">
       <div className="metric-top">
         <span>{label}</span>
-        <div className="metric-icon">{icon}</div>
+        <div className="metric-icon"><NavIcon name={icon} /></div>
       </div>
 
       <div className="metric-bottom">
@@ -2883,7 +2945,7 @@ function LoginPage({ onLogin, onRegister }) {
       <form className="login-card" onSubmit={submit}>
         <div className="brand-mark">G</div>
 
-        <h1>Greenfield College</h1>
+        <h1>Greenfield University</h1>
         <p>Sign in to your portal</p>
 
         <label>
@@ -2959,7 +3021,6 @@ function TeacherManagementPage() {
     department: "",
     designation: "",
     status: "Active",
-    courseIds: [],
   };
 
   const [teachers, setTeachers] = useState([]);
@@ -3025,7 +3086,6 @@ function TeacherManagementPage() {
       department: teacher.department,
       designation: teacher.designation,
       status: teacher.status,
-      courseIds: (teacher.courses || []).map((course) => String(course.id)),
     });
     setError("");
     setMessage("");
@@ -3044,26 +3104,20 @@ async function saveTeacher(event) {
   setMessage("");
 
   try {
-    const payload = {
-      ...form,
-      courseIds: form.courseIds.map(Number),
-    };
+    const payload = { ...form };
 
-    const path = editingId ? `/teachers/${editingId}` : "/teachers";
-    const method = editingId ? "PUT" : "POST";
+    if (!editingId) {
+      throw new Error("Teacher accounts must be created through Registration & IDs.");
+    }
 
-    const data = await request(path, {
-      method,
+    await request(`/teachers/${editingId}`, {
+      method: "PUT",
       body: JSON.stringify(payload),
     });
 
     resetForm();
 
-    setMessage(
-      editingId
-        ? "Teacher updated successfully."
-        : `Teacher added successfully! Login ID: ${data.teacherId} | Temporary Password: ${data.temporaryPassword} (Save these credentials now. They will not be shown again.)`
-    );
+    setMessage("Teacher updated successfully.");
 
     await loadData();
 
@@ -3127,11 +3181,12 @@ async function saveTeacher(event) {
         </article>
       </div>
 
+      {editingId && (
       <section className="surface teacher-form-card">
         <div className="section-heading">
           <div>
-            <h2>{editingId ? "Edit teacher" : "Add new teacher"}</h2>
-            <p>Enter the teacher's professional and contact information.</p>
+            <h2>Edit teacher</h2>
+            <p>Update the selected teacher's professional and contact information.</p>
           </div>
           {editingId && (
             <button type="button" className="button button-outline" onClick={resetForm}>
@@ -3213,26 +3268,6 @@ async function saveTeacher(event) {
                 <option>Inactive</option>
               </select>
             </label>
-            <label className="teacher-field teacher-course-field">
-              <span>Assign courses</span>
-              <select
-                multiple
-                value={form.courseIds}
-                onChange={(event) =>
-                  updateField(
-                    "courseIds",
-                    Array.from(event.target.selectedOptions, (option) => option.value)
-                  )
-                }
-              >
-                {courses.map((course) => (
-                  <option key={course.id} value={String(course.id)}>
-                    {course.course_code} — {course.course_name}
-                  </option>
-                ))}
-              </select>
-              <small>Hold Ctrl (Windows) to select more than one course.</small>
-            </label>
           </div>
 
           {error && <p className="teacher-feedback teacher-error">{error}</p>}
@@ -3243,11 +3278,12 @@ async function saveTeacher(event) {
               Clear
             </button>
             <button type="submit" className="button button-primary" disabled={saving}>
-              {saving ? "Saving..." : editingId ? "Save changes" : "Add teacher"}
+              {saving ? "Saving..." : "Save changes"}
             </button>
           </div>
         </form>
       </section>
+      )}
 
       <section className="surface teacher-directory-card">
         <div className="teacher-directory-heading">
@@ -3415,7 +3451,7 @@ function FirstLoginPasswordChange({
         <h1>Change Your Password</h1>
 
         <p>
-          Welcome to Greenfield College.
+          Welcome to Greenfield University.
           For security, you must change your temporary password
           before accessing your portal.
         </p>
@@ -3513,3 +3549,11 @@ function FirstLoginPasswordChange({
 ========================================================= */
 
 export default App;
+
+
+
+
+
+
+
+

@@ -42,7 +42,9 @@ function getAttendanceByDate(req, res) {
             a.status
      FROM students s
      LEFT JOIN attendance_records a
-       ON a.student_id = s.student_id AND a.attendance_date = ?
+       ON a.student_id = s.student_id
+      AND a.attendance_date = ?
+      AND a.attendance_session_id IS NULL
      ORDER BY s.name ASC`,
     [date],
     (err, rows) => {
@@ -135,22 +137,45 @@ function saveAttendance(req, res) {
             const record = records[index];
 
             connection.query(
-              `INSERT INTO attendance_records (student_id, attendance_date, status)
-               SELECT student_id, ?, ? FROM students WHERE student_id = ?
-               ON DUPLICATE KEY UPDATE status = VALUES(status)`,
-              [date, record.status, record.studentId],
-              (saveErr) => {
-                if (saveErr) {
+              `SELECT id FROM attendance_records
+               WHERE student_id = ? AND attendance_date = ?
+                 AND attendance_session_id IS NULL
+               ORDER BY id DESC LIMIT 1`,
+              [record.studentId, date],
+              (findErr, existingRows) => {
+                if (findErr) {
                   return connection.rollback(() => {
                     connection.release();
-                    console.error(saveErr);
-                    res.status(500).json({
-                      error: "Database error while saving attendance",
-                    });
+                    console.error(findErr);
+                    res.status(500).json({ error: "Database error while checking attendance" });
                   });
                 }
 
-                saveNext(index + 1);
+                const finishSave = (saveErr) => {
+                  if (saveErr) {
+                    return connection.rollback(() => {
+                      connection.release();
+                      console.error(saveErr);
+                      res.status(500).json({ error: "Database error while saving attendance" });
+                    });
+                  }
+                  saveNext(index + 1);
+                };
+
+                if (existingRows.length) {
+                  connection.query(
+                    "UPDATE attendance_records SET status = ? WHERE id = ?",
+                    [record.status, existingRows[0].id],
+                    finishSave
+                  );
+                } else {
+                  connection.query(
+                    `INSERT INTO attendance_records (student_id, attendance_date, status)
+                     SELECT student_id, ?, ? FROM students WHERE student_id = ?`,
+                    [date, record.status, record.studentId],
+                    finishSave
+                  );
+                }
               }
             );
           };
@@ -295,7 +320,7 @@ function saveTeacherAttendance(req, res) {
       WHERE tc.id = ?
        AND tc.teacher_id = ?
        AND tc.status = 'Active'
-       AND s.student_id IN (?)`
+       AND s.student_id IN (?)`,
       [teacherCourseId, req.teacher.id, Array.from(seen)],
       (checkErr, foundRows) => {
         if (checkErr || foundRows.length !== seen.size) {
